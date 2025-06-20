@@ -15,7 +15,9 @@ add_library(LibraC STATIC src/libraCore.c
         src/windows/libraC-windows.h
         src/linux/libraC-linux.h
         src/windows/libraC-windows.c
-        src/linux/libraC-linux.c)
+        src/linux/libraC-linux.c
+        src/libraMath.h
+        src/libraMath.c)
 
 target_include_directories(LibraC PUBLIC src src/external/glfw/include/GLFW)
 
