@@ -4,6 +4,18 @@
 
 #include <libraMath.h>
 #include <math.h>
+#include <stdio.h>
+
+void LC_MatrixPrintf(void *mat, const uint8 m, const uint8 n) {
+    float *bytes = mat;
+    for (size_t i = 0; i < m; i++) {
+        for (size_t j = 0; j < n; ++j) {
+            void *elementPointer = bytes + (j * n + i);
+            printf("%f\t", *(float *)elementPointer);
+        }
+        printf("\n");
+    }
+}
 
 void LC_Vector2DAddVector2D(LC_Vector2D target, const LC_Vector2D vecToAdd) {
     target[0] += vecToAdd[0];
@@ -108,6 +120,19 @@ void LC_Vector4DNormalize(LC_Vector4D vec4) {
     const float magnitude = LC_Vector4DMagnitude(vec4);
     const float reciprocalOfSqrt = 1 / magnitude;
     LC_Vector4DMulScaler(vec4, reciprocalOfSqrt);
+}
+
+
+float LC_Vector2DDotVector2D(const LC_Vector2D a, const LC_Vector2D b) {
+    return a[0] * b[0] + a[1] * b[1];
+}
+
+float LC_Vector3DDotVector3D(const LC_Vector3D a, const LC_Vector3D b) {
+    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+
+float LC_Vector4DDotVector4D(const LC_Vector4D a, const LC_Vector4D b) {
+    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3];
 }
 
 void LC_Matrix2DInitialize(LC_Matrix2D mat2, const LC_Vector2D a, const LC_Vector2D b) {
