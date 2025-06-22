@@ -38,6 +38,7 @@ void LC_Vector4DNormalize(LC_Vector4D vec4);
 float LC_Vector2DDotVector2D(const LC_Vector2D a, const LC_Vector2D b);
 float LC_Vector3DDotVector3D(const LC_Vector3D a, const LC_Vector3D b);
 float LC_Vector4DDotVector4D(const LC_Vector4D a, const LC_Vector4D b);
+void LC_Vector3DCrossVector3D(const LC_Vector3D a, const LC_Vector3D b, LC_Vector3D destination);
 
 void LC_Matrix2DInitialize(LC_Matrix2D mat2, const LC_Vector2D a, const LC_Vector2D b);
 void LC_Matrix2DInitializeF(float n00, float n01,

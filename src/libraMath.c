@@ -274,3 +274,9 @@ void LC_Matrix4DMulMatrix4D(LC_Matrix4D a, LC_Matrix4D b, LC_Matrix4D destinatio
                            a[0][3] * b[3][0] + a[1][3] * b[3][1] + a[2][3] * b[3][2] + a[3][3] * b[3][3],
                            destination);
 }
+
+void LC_Vector3DCrossVector3D(const LC_Vector3D a, const LC_Vector3D b, LC_Vector3D destination) {
+    destination[0] = a[1] * b[2] - a[2] * b[1];
+    destination[1] = a[2] * b[0] - a[0] * b[2];
+    destination[2] = a[0] * b[1] - a[1] * b[0];
+}
