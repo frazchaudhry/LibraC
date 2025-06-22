@@ -131,12 +131,12 @@ void LC_GetFileContent(Arena *arena, const char *filePath, char **fileContents) 
     FILE *file = fopen(filePath, "r");
 
     if (file == NULL) return;
-    // Move the point32er of the current position in the file to the end.
+    // Move the pointer of the current position in the file to the end.
     fseek(file, 0, SEEK_END);
-    // Traverse the file from the beginning of the file to the current position. The current position of the point32er
+    // Traverse the file from the beginning of the file to the current position. The current position of the pointer
     // was set to be the end of the file with SEEK_END in the previous statement.
     const int32 length = ftell(file);
-    // Move the point32er of the current position back to the beginning of the file
+    // Move the pointer of the current position back to the beginning of the file
     fseek(file, 0, SEEK_SET);
 
     // Allocate memory for the string. We add 1 to the length to store the null terminating character '\0' at the end.
