@@ -22,3 +22,5 @@ add_library(LibraC STATIC src/libraCore.c
 target_include_directories(LibraC PUBLIC src src/external/glfw/include/GLFW)
 
 target_link_libraries(LibraC PUBLIC glfw glad)
+
+target_compile_definitions(${PROJECT_NAME} PUBLIC "$<$<CONFIG:Debug>:DEBUG>")

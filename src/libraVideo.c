@@ -204,7 +204,6 @@ bool LC_GL_InitializeTextRenderer(Arena *arena, LC_GL_GameText *gameText, const 
 void LC_GL_DeleteTextRenderer(const LC_GL_GameText *gameText) {
     glDeleteBuffers(1, &gameText->vao);
     glDeleteBuffers(1, &gameText->vbo);
-    glDeleteBuffers(1, &gameText->ebo);
     glDeleteTextures(1, &gameText->fontAtlasTextureId);
     glDeleteProgram(gameText->fontShaderProgramId);
 }
@@ -212,6 +211,61 @@ void LC_GL_DeleteTextRenderer(const LC_GL_GameText *gameText) {
 // ==================================================================================================================
 
 // =============================================Game Core============================================================
+
+int32 LC_GL_InitializeVideo(GLFWwindow **window, const int32 screenWidth, const int32 screenHeight, const char *title,
+    char *errorLog) {
+    if (!glfwInit()) {
+        const char *errorDesc;
+        glfwGetError(&errorDesc);
+        sprintf(errorLog, "Couldn't initialize GLFW: %s", errorDesc);
+        return EXIT_FAILURE;
+    }
+
+    /* Set OpenGL settings. */
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    /* Create the window */
+    *window = glfwCreateWindow(screenWidth, screenHeight, title, nullptr, nullptr);
+    if (!*window) {
+        const char *errorDesc;
+        glfwGetError(&errorDesc);
+        sprintf(errorLog, "Couldn't create window and renderer: %s", errorLog);
+        return EXIT_FAILURE;
+    }
+
+    // Get the OpenGL context
+    glfwMakeContextCurrent(*window);
+    glfwSetFramebufferSizeCallback(*window, LC_GL_FramebufferSizeCallback);
+
+    // Initialize GLAD
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+        const char *errorDesc;
+        glfwGetError(&errorDesc);
+        sprintf(errorLog, "Couldn't initialize GLAD: %s", errorDesc);
+        return EXIT_FAILURE;
+    }
+
+#if defined(DEBUG) || defined(_DEBUG)
+    LC_GL_GetOpenGLVersionInfo();
+#endif
+
+    glViewport(0, 0, screenWidth, screenHeight);
+
+    return EXIT_SUCCESS;
+}
+
+void LC_GL_FramebufferSizeCallback(GLFWwindow *window, const int32 width, const int32 height) {
+    glViewport(0, 0, width, height);
+}
+
+void LC_GL_GetOpenGLVersionInfo() {
+    printf("\n\nVendor: %s", (char*)glGetString(GL_VENDOR));
+    printf("\nRenderer: %s", (char*)glGetString(GL_RENDERER));
+    printf("\nVersion: %s", (char*)glGetString(GL_VERSION));
+    printf("\nShading Language: %s\n\n", (char*)glGetString(GL_SHADING_LANGUAGE_VERSION));
+}
 
 void LC_GL_SetupViewProjectionMatrix2D(int32 screenWidth, int32 screenHeight, mat4 viewProjectionMatrix) {
     mat4 projection;

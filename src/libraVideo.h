@@ -58,6 +58,8 @@ typedef struct gameText {
 bool LC_GL_InitializeTextRenderer(Arena *arena, LC_GL_GameText *gameText, const char *fontName, float fontSize,
                                    const char *vertexShaderPath, const char *fragmentShaderPath, char *errorLog);
 
+void LC_GL_FramebufferSizeCallback(GLFWwindow *window, int32 width, int32 height);
+void LC_GL_GetOpenGLVersionInfo();
 void LC_GL_DeleteTextRenderer(const LC_GL_GameText *gameText);
 
 // ==================================================================================================================
@@ -65,10 +67,14 @@ void LC_GL_DeleteTextRenderer(const LC_GL_GameText *gameText);
 // =============================================Game Core============================================================
 
 typedef struct gameState {
+    GLFWwindow *window;
     mat4 viewProjectionMatrix;
     LC_GL_GameText *gameText;
 } LC_GL_GameState;
 
+int32 LC_GL_InitializeVideo(GLFWwindow **window, int32 screenWidth, int32 screenHeight, const char *title,
+    char *errorLog);
+void LC_GL_FramebufferSizeCallback(GLFWwindow *window, int32 width, int32 height);
 void LC_GL_SetupViewProjectionMatrix2D(int32 screenWidth, int32 screenHeight, mat4 viewProjectionMatrix);
 
 // ==================================================================================================================
