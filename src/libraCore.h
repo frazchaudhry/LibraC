@@ -45,7 +45,8 @@ void LC_EndTemporaryArena(TemporaryArenaMemory temporaryArena);
 // File Operations
 // ===================================================================================================================
 
-void LC_GetFileContent(Arena *arena, const char *filePath, char **fileContents);
+void LC_GetFileContentString(Arena *arena, const char *filePath, char **fileContents);
+void LC_GetFileContentBinary(Arena *arena, const char *filePath, uchar **fileContents, size_t *fileSize);
 
 // ===================================================================================================================
 // Strings and String Operations
@@ -57,6 +58,7 @@ typedef struct {
 } LC_String;
 
 void LC_InitializeString(LC_String *string, char *cString);
+uint32 LC_GetStringLengthSkipSpaces(const LC_String *string);
 
 // ===================================================================================================================
 // Sorting Algorithms

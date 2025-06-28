@@ -5,37 +5,71 @@
 #ifndef LIBRAVIDEO_H
 #define LIBRAVIDEO_H
 
-#include <libraC.h>
+#include <external/stb_truetype.h>
 
+#include <libraC.h>
 #include "libraCore.h"
 
 // =============================================SHADER===============================================================
 
 typedef struct shader {
-    uint32 programId;
+    GLuint programId;
 } LC_GL_Shader;
 
 bool LC_GL_InitializeShader(Arena *arena, LC_GL_Shader *shader, const char *vertexShaderPath,
                             const char *fragmentShaderPath,
                             char *buffer);
 
-void LC_GL_UseProgram(uint32 programId);
+void LC_GL_UseProgram(GLuint programId);
 
-void LC_GL_SetUniformBool(const LC_GL_Shader *shader, const char *name, bool value);
-void LC_GL_SetUniformInt(const LC_GL_Shader *shader, const char *name, int32 value);
-void LC_GL_SetUniformFloat(const LC_GL_Shader *shader, const char *name, float value);
-void LC_GL_SetUniformVec2(const LC_GL_Shader *shader, const char *name, const vec2 value);
-void LC_GL_SetUniformVec2f(const LC_GL_Shader *shader, const char *name, float x, float y);
-void LC_GL_SetUniformVec3(const LC_GL_Shader *shader, const char *name, const vec3 value);
-void LC_GL_SetUniformVec3f(const LC_GL_Shader *shader, const char *name, float x, float y, float z);
-void LC_GL_SetUniformVec4(const LC_GL_Shader *shader, const char *name, const vec4 value);
-void LC_GL_SetUniformVec4f(const LC_GL_Shader *shader, const char *name, float x, float y, float z,
+void LC_GL_SetUniformBool(GLuint programId, const char *name, bool value);
+void LC_GL_SetUniformInt(GLuint programId, const char *name, int32 value);
+void LC_GL_SetUniformFloat(GLuint programId, const char *name, float value);
+void LC_GL_SetUniformVec2(GLuint programId, const char *name, const vec2 value);
+void LC_GL_SetUniformVec2f(GLuint programId, const char *name, float x, float y);
+void LC_GL_SetUniformVec3(GLuint programId, const char *name, const vec3 value);
+void LC_GL_SetUniformVec3f(GLuint programId, const char *name, float x, float y, float z);
+void LC_GL_SetUniformVec4(GLuint programId, const char *name, const vec4 value);
+void LC_GL_SetUniformVec4f(GLuint programId, const char *name, float x, float y, float z,
                            float w);
-void LC_GL_SetUniformMat2(const LC_GL_Shader *shader, const char *name, const mat2 *mat);
-void LC_GL_SetUniformMat3(const LC_GL_Shader *shader, const char *name, const mat3 *mat);
-void LC_GL_SetUniformMat4(const LC_GL_Shader *shader, const char *name, const mat4 *mat);
+void LC_GL_SetUniformMat2(GLuint programId, const char *name, const mat2 *mat);
+void LC_GL_SetUniformMat3(GLuint programId, const char *name, const mat3 *mat);
+void LC_GL_SetUniformMat4(GLuint programId, const char *name, const mat4 *mat);
 
-bool CheckCompileErrors(uint32 shader, char *type, char *buffer);
+bool CheckCompileErrors(GLuint programId, char *type, char *buffer);
+
+// ==================================================================================================================
+
+// =============================================Text Rendering=======================================================
+
+typedef struct gameText {
+    GLuint vao;
+    GLuint vbo;
+    GLuint fontAtlasTextureId;
+    GLuint fontShaderProgramId;
+    char *fontName;
+    float fontSize;
+    uint32 codePointOfFirstCharacter;
+    uint32 charsToIncludeInFontAtlas;
+    stbtt_packedchar *packedChars;
+    stbtt_aligned_quad *alignedQuads;
+} LC_GL_GameText;
+
+bool LC_GL_InitializeTextRenderer(Arena *arena, LC_GL_GameText *gameText, const char *fontName, float fontSize,
+                                   const char *vertexShaderPath, const char *fragmentShaderPath, char *errorLog);
+
+void LC_GL_DeleteTextRenderer(const LC_GL_GameText *gameText);
+
+// ==================================================================================================================
+
+// =============================================Game Core============================================================
+
+typedef struct gameState {
+    mat4 viewProjectionMatrix;
+    LC_GL_GameText *gameText;
+} LC_GL_GameState;
+
+void LC_GL_SetupViewProjectionMatrix2D(int32 screenWidth, int32 screenHeight, mat4 viewProjectionMatrix);
 
 // ==================================================================================================================
 

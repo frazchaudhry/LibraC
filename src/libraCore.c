@@ -124,7 +124,7 @@ void LC_EndTemporaryArena(const TemporaryArenaMemory temporaryArena) {
 // File Operations
 // ===================================================================================================================
 
-void LC_GetFileContent(Arena *arena, const char *filePath, char **fileContents) {
+void LC_GetFileContentString(Arena *arena, const char *filePath, char **fileContents) {
     if (filePath == NULL) return;
 
     // Open the file in "read mode"
@@ -156,6 +156,26 @@ void LC_GetFileContent(Arena *arena, const char *filePath, char **fileContents) 
     fclose(file);
 }
 
+void LC_GetFileContentBinary(Arena *arena, const char *filePath, uchar **fileContents, size_t *fileSize) {
+    FILE *file = fopen(filePath, "rb");
+    if (file == NULL) {
+        *fileSize = 0;
+        return;
+    }
+
+    fseek(file, 0, SEEK_END);
+    *fileSize = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    *fileContents = LC_AllocateArena(arena, *fileSize);
+    if (*fileContents == NULL) {
+        fclose(file);
+        return;
+    }
+    fread(*fileContents, *fileSize, 1, file);
+    fclose(file);
+}
+
 // ===================================================================================================================
 // Strings and String Operations
 // ===================================================================================================================
@@ -169,6 +189,18 @@ void LC_InitializeString(LC_String *string, char *cString) {
 
     string->length = count;
     string->data = cString;
+}
+
+uint32 LC_GetStringLengthSkipSpaces(const LC_String *string) {
+    uint32 count = 0;
+    if (string == NULL || string->data == NULL) return count;
+
+    for (size_t i = 0; i < string->length; i++) {
+        if (string->data[i] != ' ') {
+            count++;
+        }
+    }
+    return count;
 }
 
 // ===================================================================================================================
