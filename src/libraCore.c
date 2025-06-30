@@ -76,11 +76,11 @@ uintptr_t LC_AlignForward(const uintptr_t ptr, const size_t align) {
     return p;
 }
 
-void* LC_AllocateAndAlignArena(LC_Arena *arena, const size_t size, const size_t align) {
+void *LC_AllocateAndAlignArena(LC_Arena *arena, const size_t size, const size_t align) {
     // Align 'currentOffset' forward to the specified alignment
-    const uintptr_t currentPointer = (uintptr_t)arena->buffer + arena->currentOffset;
+    const uintptr_t currentPointer = (uintptr_t) arena->buffer + arena->currentOffset;
     uintptr_t offset = LC_AlignForward(currentPointer, align);
-    offset -= (uintptr_t)arena->buffer;
+    offset -= (uintptr_t) arena->buffer;
 
     // check to see if the backing memory has space left
     if (offset + size <= arena->bufferLength) {
@@ -96,12 +96,12 @@ void* LC_AllocateAndAlignArena(LC_Arena *arena, const size_t size, const size_t 
     return NULL;
 }
 
-void* LC_AllocateArena(LC_Arena *arena, const size_t size) {
+void *LC_AllocateArena(LC_Arena *arena, const size_t size) {
     return LC_AllocateAndAlignArena(arena, size, DEFAULT_ALIGNMENT);
 }
 
 void LC_InitializeArena(LC_Arena *arena, void *backingBuffer, const size_t backingBufferLength) {
-    arena->buffer = (uchar*)backingBuffer;
+    arena->buffer = (uchar *) backingBuffer;
     arena->bufferLength = backingBufferLength;
     arena->currentOffset = 0;
     arena->previousOffset = 0;
@@ -111,12 +111,12 @@ void LC_FreeArena(LC_Arena *arena, void *pointer) {
     // do nothing
 }
 
-void* LC_ResizeAndAlignArena(LC_Arena *arena, void *oldMemory, const size_t oldSize, const size_t newSize,
+void *LC_ResizeAndAlignArena(LC_Arena *arena, void *oldMemory, const size_t oldSize, const size_t newSize,
                              const size_t align) {
     assert(LC_IsPowerOfTwo(align));
 
     if (oldMemory == NULL || oldSize == 0) return LC_AllocateAndAlignArena(arena, newSize, align);
-    if (arena->buffer <= (uchar*)oldMemory && (uchar*)oldMemory < arena->buffer + arena->bufferLength) {
+    if (arena->buffer <= (uchar *) oldMemory && (uchar *) oldMemory < arena->buffer + arena->bufferLength) {
         if (arena->buffer + arena->previousOffset == oldMemory) {
             arena->currentOffset = arena->previousOffset + newSize;
             if (newSize > oldSize) {
@@ -133,7 +133,7 @@ void* LC_ResizeAndAlignArena(LC_Arena *arena, void *oldMemory, const size_t oldS
     assert(0 && "Memory is out of bounds of the buffer in this arena");
 }
 
-void* LC_ResizeArena(LC_Arena *arena, void *oldMemory, const size_t oldSize, const size_t newSize) {
+void *LC_ResizeArena(LC_Arena *arena, void *oldMemory, const size_t oldSize, const size_t newSize) {
     return LC_ResizeAndAlignArena(arena, oldMemory, oldSize, newSize, DEFAULT_ALIGNMENT);
 }
 
@@ -182,7 +182,7 @@ void LC_GetFileContentString(LC_Arena *arena, const char *filePath, char **fileC
     int32 i = 0;
 
     // fgetc will return each character until it get to the end of file where it will return EOF and the loop will end.
-    while ((c = (char)fgetc(file)) != EOF) {
+    while ((c = (char) fgetc(file)) != EOF) {
         (*fileContents)[i] = c;
         i++;
     }
@@ -215,6 +215,38 @@ void LC_GetFileContentBinary(LC_Arena *arena, const char *filePath, uchar **file
 // ===================================================================================================================
 // Data Structures
 // ===================================================================================================================
+
+void LC_ListInitialize(LC_List *list, const size_t sizeOfElement) {
+    list->_sizeOfElement = sizeOfElement;
+    list->_actualBufferSize = 4;
+    list->_length = 0;
+    list->_data = calloc(list->_actualBufferSize, list->_sizeOfElement);
+}
+
+void LC_ListAdd(LC_List *list, void *element) {
+    const uchar *bytes = element;
+    uchar *pointerToEnd = list->_data + list->_length * list->_sizeOfElement;
+    if (list->_length + 1 >= list->_actualBufferSize) {
+        list->_actualBufferSize *= 2;
+        uchar *newPointer = realloc(list->_data, list->_actualBufferSize);
+        if (newPointer == NULL) {
+            list->_actualBufferSize /= 2;
+            return;
+        }
+        list->_data = newPointer;
+        pointerToEnd = list->_data + list->_length * list->_sizeOfElement;
+        memset(pointerToEnd, 0, list->_actualBufferSize / 2 * list->_sizeOfElement);
+    }
+    memcpy(pointerToEnd, bytes, list->_sizeOfElement);
+    list->_length++;
+}
+
+void LC_ListDestroy(LC_List *list) {
+    list->_sizeOfElement = 0;
+    list->_actualBufferSize = 0;
+    list->_length = 0;
+    free(list->_data);
+}
 
 // ===================================================================================================================
 // Sorting Algorithms
@@ -289,8 +321,7 @@ void LC_MergeIntegers(int32 *array, const int32 low, const int32 mid, const int3
         if (left[i] <= right[j]) {
             array[k] = left[i];
             i++;
-        }
-        else {
+        } else {
             array[k] = right[j];
             j++;
         }

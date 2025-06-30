@@ -63,14 +63,16 @@ void LC_GetFileContentBinary(LC_Arena *arena, const char *filePath, uchar **file
 // ===================================================================================================================
 // Data Structures
 // ===================================================================================================================
-typedef struct array {
+typedef struct list {
     uchar *_data;
     uint32 _length;
     uint32 _actualBufferSize;
     size_t _sizeOfElement;
-} LC_Array;
+} LC_List;
 
-void LC_ArrayInitialize(LC_Array *array, size_t sizeOfElement);
+void LC_ListInitialize(LC_List *list, size_t sizeOfElement);
+void LC_ListAdd(LC_List *list, void *element);
+void LC_ListDestroy(LC_List *list);
 
 // ===================================================================================================================
 // Sorting Algorithms
