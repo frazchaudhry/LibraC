@@ -63,7 +63,7 @@ void LC_GL_SetUniformMat4(const GLuint programId, const char *name, const mat4 *
     glUniformMatrix4fv(glGetUniformLocation(programId, name), 1, GL_FALSE, mat[0][0]);
 }
 
-bool LC_GL_InitializeShader(Arena *arena, LC_GL_Shader *shader, const char *vertexShaderPath,
+bool LC_GL_InitializeShader(LC_Arena *arena, LC_GL_Shader *shader, const char *vertexShaderPath,
                             const char *fragmentShaderPath, char *buffer) {
     char *vertexShaderSource = nullptr;
     char *fragmentShaderSource = nullptr;
@@ -131,11 +131,11 @@ bool CheckCompileErrors(const GLuint programId, char *type, char *buffer) {
 
 // =============================================Text Rendering=======================================================
 
-bool LC_GL_InitializeTextRenderer(Arena *arena, LC_GL_GameText *gameText, const char *fontName, const float fontSize,
+bool LC_GL_InitializeTextRenderer(LC_Arena *arena, LC_GL_GameText *gameText, const char *fontName, const float fontSize,
                                   const char *vertexShaderPath, const char *fragmentShaderPath, char *errorLog) {
     constexpr size_t STARTING_ARENA_SIZE = 300 * 1024;
     void *localArenaBuffer = malloc(STARTING_ARENA_SIZE);
-    Arena localArena = { nullptr };
+    LC_Arena localArena = { nullptr };
     LC_InitializeArena(&localArena, localArenaBuffer, STARTING_ARENA_SIZE);
 
     LC_GL_Shader shader;
@@ -201,6 +201,191 @@ bool LC_GL_InitializeTextRenderer(Arena *arena, LC_GL_GameText *gameText, const 
     return true;
 }
 
+void LC_GL_InsertTextBytesIntoBuffer(float *buffer, uint64 *bufferOffset, const LC_GL_GameText *gameText, LC_GL_Text *text) {
+    const uint32 codePointOfFirstCharacter = gameText->codePointOfFirstCharacter;
+    const uint32 charsToIncludeInFontAtlas = gameText->charsToIncludeInFontAtlas;
+    const float fontSize = gameText->fontSize;
+    vec3 localPosition = { text->position[0], text->position[1], text->position[2] };
+    text->bufferPosition = *bufferOffset;
+
+    for (size_t i = 0; i < text->string.length; i++) {
+        const char ch = text->string.data[i];
+
+        if (ch < codePointOfFirstCharacter || ch > codePointOfFirstCharacter + charsToIncludeInFontAtlas) {
+            printf("\nCharacter '%c' with code point %d is not included in the font atlas", ch, (int)ch);
+            continue;
+        }
+        // Handle newlines separately.
+        if (ch == '\n') {
+            // advance y by fontSize, reset x-coordinate
+            localPosition[1] -= fontSize * text->scale;
+            localPosition[0] = text->position[0];
+            continue;
+        }
+        // Retrieve the data used to render a glyph of character 'ch'
+        const stbtt_packedchar *packedChar = &gameText->packedChars[ch - codePointOfFirstCharacter];
+        const stbtt_aligned_quad *alignedQuad = &gameText->alignedQuads[ch - codePointOfFirstCharacter];
+
+        const uint8 characterWidth = packedChar->x1 - packedChar->x0;
+        const uint8 characterHeight = packedChar->y1 - packedChar->y0;
+
+        // Handle spaces by skipping them.
+        if (ch == ' ') {
+            // advance x by fontSize, no need to reset y-coordinate
+            localPosition[0] += packedChar->xadvance * text->scale;
+            continue;
+        }
+
+        // The units of the above struct fields are in pixels,
+        // convert them to a unit of what we won't be multiplying to pixelScale
+        const vec2 glyphSize =
+        {
+            (float)characterWidth * text->scale,
+            (float)characterHeight * text->scale
+        };
+
+        const vec2 glyphBoundingBoxBottomLeft =
+        {
+            localPosition[0] + (packedChar->xoff * text->scale),
+            localPosition[1] + (packedChar->yoff + (float)characterHeight) * text->scale
+        };
+
+        // The vertex order of a quad goes bottom left, bottom right, top left, top right.
+        const vec2 glyphVertices[4] =
+        {
+            { glyphBoundingBoxBottomLeft[0], glyphBoundingBoxBottomLeft[1] },
+            { glyphBoundingBoxBottomLeft[0] + glyphSize[0], glyphBoundingBoxBottomLeft[1] },
+            { glyphBoundingBoxBottomLeft[0], glyphBoundingBoxBottomLeft[1] - glyphSize[1] },
+            { glyphBoundingBoxBottomLeft[0] + glyphSize[0], glyphBoundingBoxBottomLeft[1] - glyphSize[1] },
+        };
+
+        const vec2 glyphTextureCoords[4] =
+        {
+            { alignedQuad->s0, alignedQuad->t1 },
+            { alignedQuad->s1, alignedQuad->t1 },
+            { alignedQuad->s0, alignedQuad->t0 },
+            { alignedQuad->s1, alignedQuad->t0 },
+        };
+
+        // We need to fill the vertex buffer by 4 vertices to render a quad as we are rendering a quad as 2 triangles
+        for (size_t j = 0; j < 4; j++) {
+            // position
+            buffer[(*bufferOffset)++] = glyphVertices[j][0];
+            buffer[(*bufferOffset)++] = glyphVertices[j][1];
+            buffer[(*bufferOffset)++] = text->position[2];
+
+            // color
+            buffer[(*bufferOffset)++] = text->color[0];
+            buffer[(*bufferOffset)++] = text->color[1];
+            buffer[(*bufferOffset)++] = text->color[2];
+            buffer[(*bufferOffset)++] = text->color[3];
+
+            // texture coordinates
+            buffer[(*bufferOffset)++] = glyphTextureCoords[j][0];
+            buffer[(*bufferOffset)++] = glyphTextureCoords[j][1];
+        }
+        // Update the position to render the next glyph specified by packedChar->xadvance.
+        localPosition[0] += packedChar->xadvance * text->scale;
+    }
+}
+
+void LC_GL_SetupVaoAndVboText(LC_GL_GameText *gameText) {
+    glCreateBuffers(1, &gameText->vbo);
+    glNamedBufferStorage(gameText->vbo, gameText->sizeOfBuffer, gameText->buffer, GL_DYNAMIC_STORAGE_BIT);
+
+    glCreateVertexArrays(1, &gameText->vao);
+    constexpr GLuint vaoBindingPoint = 0;
+    glVertexArrayVertexBuffer(gameText->vao, vaoBindingPoint, gameText->vbo, 0, 9 * sizeof(float));
+
+    constexpr uint8 positionIndex = 0;
+    constexpr uint8 colorIndex = 1;
+    constexpr uint8 texCoordIndex = 2;
+
+    glEnableVertexArrayAttrib(gameText->vao, positionIndex);
+    glEnableVertexArrayAttrib(gameText->vao, colorIndex);
+    glEnableVertexArrayAttrib(gameText->vao, texCoordIndex);
+
+    glVertexArrayAttribFormat(gameText->vao, positionIndex, 3, GL_FLOAT, GL_FALSE, 0);
+    glVertexArrayAttribFormat(gameText->vao, colorIndex, 4, GL_FLOAT, GL_FALSE, 3 * sizeof(float));
+    glVertexArrayAttribFormat(gameText->vao, texCoordIndex, 2, GL_FLOAT, GL_FALSE, 7 * sizeof(float));
+
+    glVertexArrayAttribBinding(gameText->vao, positionIndex, vaoBindingPoint);
+    glVertexArrayAttribBinding(gameText->vao, colorIndex, vaoBindingPoint);
+    glVertexArrayAttribBinding(gameText->vao, texCoordIndex, vaoBindingPoint);
+}
+
+void LC_GL_RenderTextBegin(LC_Arena *arena, LC_GL_GameText *gameText) {
+    LC_String hello;
+    LC_InitializeString(&hello, "Hello World!");
+    const LC_GL_Text text1 = {
+        .string = hello,
+        .position = { 15.0f, 48.0f, 1.0f },
+        .color = { 1.0f, 0.0f, 0.757f, 1.0f },
+        .scale = 1.0f
+    };
+    LC_String s2;
+    LC_InitializeString(&s2, "Another One!");
+    const LC_GL_Text text2 = {
+        .string = s2,
+        .position = { 200.0f, 450.0f, 1.0f },
+        .color = { 0.2f, 0.58f, 0.9f, 1.0f },
+        .scale = 1.0f
+    };
+
+    gameText->textList = LC_AllocateArena(arena, sizeof(LC_GL_Text) * 2);
+    gameText->textList[0] = text1;
+    gameText->textList[1] = text2;
+
+    LC_GL_Text *texts = gameText->textList;
+    uint64 totalCharacters = 0;
+    for (size_t i = 0; i < 2; i++) {
+        totalCharacters += LC_GetStringLengthSkipSpaces(&texts[i].string);
+    }
+
+    // Each quad has 4 vertices
+    const uint32 MAX_QUADS = totalCharacters;
+    gameText->totalVertices = (int32)MAX_QUADS * 4;
+    constexpr uint32 NUMBER_OF_FLOATS_PER_VERTEX = 9; // 3 for position, 4 for color, 2 for texture coordinates
+    gameText->sizeOfBuffer = (int64)sizeof(float) * gameText->totalVertices * NUMBER_OF_FLOATS_PER_VERTEX;
+
+    gameText->buffer = LC_AllocateArena(arena, gameText->sizeOfBuffer);
+
+    uint64 currentBufferOffset = 0;
+
+    for (size_t i = 0; i < 2; i++) {
+        LC_GL_InsertTextBytesIntoBuffer(gameText->buffer, &currentBufferOffset, gameText, &texts[i]);
+    }
+
+    LC_GL_SetupVaoAndVboText(gameText);
+}
+
+void LC_GL_RenderText(const LC_GL_GameText *gameText, const mat4 *viewProjectionMatrix) {
+    glEnable(GL_CULL_FACE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    LC_GL_UseProgram(gameText->fontShaderProgramId);
+    LC_GL_SetUniformInt(gameText->fontShaderProgramId, "fontAtlasTexture", 0);
+    LC_GL_SetUniformMat4(gameText->fontShaderProgramId, "viewProjectionMatrix",
+                         viewProjectionMatrix);
+
+    // Bind the Texture Unit
+    glBindTextureUnit(0, gameText->fontAtlasTextureId);
+
+    // Render here
+    glBindVertexArray(gameText->vao);
+    // glNamedBufferSubData(gameState.gameText->vbo, 0, SIZE_OF_BUFFER, gameState.gameText->buffer);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, gameText->totalVertices);
+}
+
+void LC_GL_RenderTextEnd(const LC_GL_GameText *gameText) {
+    // Unbind the Texture Unit
+    glBindTextureUnit(0, 0);
+
+    // Unbind Vertex Array
+    glBindVertexArray(0);
+}
+
 void LC_GL_DeleteTextRenderer(const LC_GL_GameText *gameText) {
     glDeleteBuffers(1, &gameText->vao);
     glDeleteBuffers(1, &gameText->vbo);
@@ -212,8 +397,24 @@ void LC_GL_DeleteTextRenderer(const LC_GL_GameText *gameText) {
 
 // =============================================Game Core============================================================
 
-int32 LC_GL_InitializeVideo(GLFWwindow **window, const int32 screenWidth, const int32 screenHeight, const char *title,
-    char *errorLog) {
+void LC_InitializeColor(const float red, const float green, const float blue, const float alpha, LC_Color *color) {
+    color->r = red;
+    color->g = green;
+    color->b = blue;
+    color->a = alpha;
+}
+
+LC_Color LC_CreateColor(const float red, const float green, const float blue, const float alpha) {
+    const LC_Color color = {
+        .r = red,
+        .g = green,
+        .b = blue,
+        .a = alpha
+    };
+    return color;
+}
+
+int32 LC_GL_InitializeVideo(LC_Arena *arena, LC_GL_GameState *gameState, const char *title, char *errorLog) {
     if (!glfwInit()) {
         const char *errorDesc;
         glfwGetError(&errorDesc);
@@ -227,8 +428,8 @@ int32 LC_GL_InitializeVideo(GLFWwindow **window, const int32 screenWidth, const 
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     /* Create the window */
-    *window = glfwCreateWindow(screenWidth, screenHeight, title, nullptr, nullptr);
-    if (!*window) {
+    gameState->window = glfwCreateWindow(gameState->screenWidth, gameState->screenHeight, title, nullptr, nullptr);
+    if (!gameState->window) {
         const char *errorDesc;
         glfwGetError(&errorDesc);
         sprintf(errorLog, "Couldn't create window and renderer: %s", errorLog);
@@ -236,8 +437,8 @@ int32 LC_GL_InitializeVideo(GLFWwindow **window, const int32 screenWidth, const 
     }
 
     // Get the OpenGL context
-    glfwMakeContextCurrent(*window);
-    glfwSetFramebufferSizeCallback(*window, LC_GL_FramebufferSizeCallback);
+    glfwMakeContextCurrent(gameState->window);
+    glfwSetFramebufferSizeCallback(gameState->window, LC_GL_FramebufferSizeCallback);
 
     // Initialize GLAD
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
@@ -251,7 +452,12 @@ int32 LC_GL_InitializeVideo(GLFWwindow **window, const int32 screenWidth, const 
     LC_GL_GetOpenGLVersionInfo();
 #endif
 
-    glViewport(0, 0, screenWidth, screenHeight);
+    glViewport(0, 0, gameState->screenWidth, gameState->screenHeight);
+
+    LC_GL_InitializeTextRenderer(arena, gameState->gameText, "fonts/Pong-Game.ttf", 48.0f,
+                                 "shaders/text.vert", "shaders/text.frag", errorLog);
+
+    LC_GL_SetupViewProjectionMatrix2D(gameState->screenWidth, gameState->screenHeight, gameState->viewProjectionMatrix);
 
     return EXIT_SUCCESS;
 }
@@ -267,7 +473,7 @@ void LC_GL_GetOpenGLVersionInfo() {
     printf("\nShading Language: %s\n\n", (char*)glGetString(GL_SHADING_LANGUAGE_VERSION));
 }
 
-void LC_GL_SetupViewProjectionMatrix2D(int32 screenWidth, int32 screenHeight, mat4 viewProjectionMatrix) {
+void LC_GL_SetupViewProjectionMatrix2D(const int32 screenWidth, const int32 screenHeight, mat4 viewProjectionMatrix) {
     mat4 projection;
     glm_ortho(0.0f, (float)screenWidth, (float)screenHeight, 0.0f, -1.0f, 1.0f, projection);
     mat4 view = GLM_MAT4_IDENTITY_INIT;
@@ -283,6 +489,30 @@ void LC_GL_SetupViewProjectionMatrix2D(int32 screenWidth, int32 screenHeight, ma
     glm_scale(view, scale);
 
     glm_mat4_mul(projection, view, viewProjectionMatrix);
+}
+
+void LC_GL_RenderBegin(LC_Arena *arena, const LC_GL_GameState *gameState) {
+    LC_GL_RenderTextBegin(arena, gameState->gameText);
+}
+
+void LC_GL_Render(const LC_GL_GameState *gameState) {
+    LC_GL_RenderText(gameState->gameText, &gameState->viewProjectionMatrix);
+}
+
+void LC_GL_ClearBackground(const LC_Color color) {
+    glClearColor(color.r, color.b, color.g, color.a);
+    glClear(GL_COLOR_BUFFER_BIT);
+}
+
+void LC_GL_RenderEnd(const LC_GL_GameState *gameState) {
+    LC_GL_RenderTextEnd(gameState->gameText);
+
+    glfwSwapBuffers(gameState->window);
+}
+
+void LC_GL_FreeResources(const LC_GL_GameState *gameState) {
+    glfwTerminate();
+    LC_GL_DeleteTextRenderer(gameState->gameText);
 }
 
 // ==================================================================================================================

@@ -8,12 +8,49 @@
 #include "windows/libraC-windows.h"
 
 // ===================================================================================================================
+// Strings and String Operations
+// ===================================================================================================================
+
+void LC_InitializeString(LC_String *string, char *cString) {
+    uint32 count = 0;
+
+    while (cString[count] != '\0') {
+        count++;
+    }
+
+    string->length = count;
+    string->data = cString;
+}
+
+uint32 LC_GetStringLengthSkipSpaces(const LC_String *string) {
+    uint32 count = 0;
+    if (string == NULL || string->data == NULL) return count;
+
+    for (size_t i = 0; i < string->length; i++) {
+        if (string->data[i] != ' ') {
+            count++;
+        }
+    }
+    return count;
+}
+
+// ===================================================================================================================
 // Utility Operations
 // ===================================================================================================================
-void LC_SwapIntegers(int32 *x, int32 *y) {
-    const int32 temp = *x;
-    *x = *y;
-    *y = temp;
+void LC_SwapValues(void *x, void *y, const size_t sizeOfElement, bool *success) {
+    uchar *xBytes = x;
+    uchar *yBytes = y;
+    uchar *temp = malloc(sizeOfElement);
+    if (temp == NULL) {
+        *success = false;
+        return;
+    }
+    memcpy(temp, xBytes, sizeOfElement);
+    memcpy(xBytes, yBytes, sizeOfElement);
+    memcpy(yBytes, temp, sizeOfElement);
+    free(temp);
+
+    *success = true;
 }
 
 // ===================================================================================================================
@@ -39,7 +76,7 @@ uintptr_t LC_AlignForward(const uintptr_t ptr, const size_t align) {
     return p;
 }
 
-void* LC_AllocateAndAlignArena(Arena *arena, const size_t size, const size_t align) {
+void* LC_AllocateAndAlignArena(LC_Arena *arena, const size_t size, const size_t align) {
     // Align 'currentOffset' forward to the specified alignment
     const uintptr_t currentPointer = (uintptr_t)arena->buffer + arena->currentOffset;
     uintptr_t offset = LC_AlignForward(currentPointer, align);
@@ -59,22 +96,22 @@ void* LC_AllocateAndAlignArena(Arena *arena, const size_t size, const size_t ali
     return NULL;
 }
 
-void* LC_AllocateArena(Arena *arena, const size_t size) {
+void* LC_AllocateArena(LC_Arena *arena, const size_t size) {
     return LC_AllocateAndAlignArena(arena, size, DEFAULT_ALIGNMENT);
 }
 
-void LC_InitializeArena(Arena *arena, void *backingBuffer, const size_t backingBufferLength) {
+void LC_InitializeArena(LC_Arena *arena, void *backingBuffer, const size_t backingBufferLength) {
     arena->buffer = (uchar*)backingBuffer;
     arena->bufferLength = backingBufferLength;
     arena->currentOffset = 0;
     arena->previousOffset = 0;
 }
 
-void LC_FreeArena(Arena *arena, void *pointer) {
+void LC_FreeArena(LC_Arena *arena, void *pointer) {
     // do nothing
 }
 
-void* LC_ResizeAndAlignArena(Arena *arena, void *oldMemory, const size_t oldSize, const size_t newSize,
+void* LC_ResizeAndAlignArena(LC_Arena *arena, void *oldMemory, const size_t oldSize, const size_t newSize,
                              const size_t align) {
     assert(LC_IsPowerOfTwo(align));
 
@@ -94,19 +131,18 @@ void* LC_ResizeAndAlignArena(Arena *arena, void *oldMemory, const size_t oldSize
         return newMemory;
     }
     assert(0 && "Memory is out of bounds of the buffer in this arena");
-    return NULL;
 }
 
-void* LC_ResizeArena(Arena *arena, void *oldMemory, const size_t oldSize, const size_t newSize) {
+void* LC_ResizeArena(LC_Arena *arena, void *oldMemory, const size_t oldSize, const size_t newSize) {
     return LC_ResizeAndAlignArena(arena, oldMemory, oldSize, newSize, DEFAULT_ALIGNMENT);
 }
 
-void LC_FreeAllArena(Arena *arena) {
+void LC_FreeAllArena(LC_Arena *arena) {
     arena->currentOffset = 0;
     arena->previousOffset = 0;
 }
 
-TemporaryArenaMemory LC_BeginTemporaryArenaMemory(Arena *arena) {
+TemporaryArenaMemory LC_BeginTemporaryArenaMemory(LC_Arena *arena) {
     TemporaryArenaMemory temporaryArena;
     temporaryArena.arena = arena;
     temporaryArena.previousOffset = arena->previousOffset;
@@ -124,7 +160,7 @@ void LC_EndTemporaryArena(const TemporaryArenaMemory temporaryArena) {
 // File Operations
 // ===================================================================================================================
 
-void LC_GetFileContentString(Arena *arena, const char *filePath, char **fileContents) {
+void LC_GetFileContentString(LC_Arena *arena, const char *filePath, char **fileContents) {
     if (filePath == NULL) return;
 
     // Open the file in "read mode"
@@ -156,7 +192,7 @@ void LC_GetFileContentString(Arena *arena, const char *filePath, char **fileCont
     fclose(file);
 }
 
-void LC_GetFileContentBinary(Arena *arena, const char *filePath, uchar **fileContents, size_t *fileSize) {
+void LC_GetFileContentBinary(LC_Arena *arena, const char *filePath, uchar **fileContents, size_t *fileSize) {
     FILE *file = fopen(filePath, "rb");
     if (file == NULL) {
         *fileSize = 0;
@@ -177,31 +213,8 @@ void LC_GetFileContentBinary(Arena *arena, const char *filePath, uchar **fileCon
 }
 
 // ===================================================================================================================
-// Strings and String Operations
+// Data Structures
 // ===================================================================================================================
-
-void LC_InitializeString(LC_String *string, char *cString) {
-    uint32 count = 0;
-
-    while (cString[count] != '\0') {
-        count++;
-    }
-
-    string->length = count;
-    string->data = cString;
-}
-
-uint32 LC_GetStringLengthSkipSpaces(const LC_String *string) {
-    uint32 count = 0;
-    if (string == NULL || string->data == NULL) return count;
-
-    for (size_t i = 0; i < string->length; i++) {
-        if (string->data[i] != ' ') {
-            count++;
-        }
-    }
-    return count;
-}
 
 // ===================================================================================================================
 // Sorting Algorithms
@@ -222,7 +235,8 @@ void LC_QuickSortIntegersRecursive(int32 *array, const int32 low, int32 high) {
 
 int32 LC_QSIntegersPartition(int32 *array, const int32 low, const int32 high) {
     const int32 pivotIndex = low + (rand() % (high - low));
-    if (pivotIndex != high) LC_SwapIntegers(&array[pivotIndex], &array[high]);
+    bool success;
+    if (pivotIndex != high) LC_SwapValues(&array[pivotIndex], &array[high], sizeof(int32), &success);
 
     const int32 pivotValue = array[high];
 
@@ -230,11 +244,11 @@ int32 LC_QSIntegersPartition(int32 *array, const int32 low, const int32 high) {
 
     for (int32 j = low; j < high; ++j) {
         if (array[j] <= pivotValue) {
-            LC_SwapIntegers(&array[i], &array[j]);
+            LC_SwapValues(&array[i], &array[j], sizeof(int32), &success);
             i++;
         }
     }
-    LC_SwapIntegers(&array[i], &array[high]);
+    LC_SwapValues(&array[i], &array[high], sizeof(int32), &success);
     return i;
 }
 
@@ -254,8 +268,8 @@ void LC_MergeSortIntegersRecursive(int32 *array, const int32 low, const int32 hi
 
 void LC_MergeIntegers(int32 *array, const int32 low, const int32 mid, const int32 high) {
     // Create left ← array[p..q] and right ← array[q+1..r]
-    int32 n1 = mid - low + 1;
-    int32 n2 = high - mid;
+    const int32 n1 = mid - low + 1;
+    const int32 n2 = high - mid;
 
     int32 left[n1], right[n2];
 
@@ -301,7 +315,7 @@ void LC_MergeIntegers(int32 *array, const int32 low, const int32 mid, const int3
 // ===================================================================================================================
 // Environment Information
 // ===================================================================================================================
-void LC_GetCurrentWorkingDirectory(Arena *arena, char **currentDirectory) {
+void LC_GetCurrentWorkingDirectory(LC_Arena *arena, char **currentDirectory) {
     constexpr size_t size = 128;
     *currentDirectory = LC_AllocateArena(arena, size);
     if (*currentDirectory == NULL) {
