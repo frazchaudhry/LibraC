@@ -223,15 +223,19 @@ void LC_ListInitialize(LC_List *list, const size_t sizeOfElement) {
     list->_data = calloc(list->_actualBufferSize, list->_sizeOfElement);
 }
 
-void LC_ListAdd(LC_List *list, void *element) {
+void* LC_ListGetData(const LC_List *list) {
+    return list->_data;
+}
+
+void* LC_ListAddElement(LC_List *list, const void *element) {
     const uchar *bytes = element;
     uchar *pointerToEnd = list->_data + list->_length * list->_sizeOfElement;
-    if (list->_length + 1 >= list->_actualBufferSize) {
+    if (list->_length + 1 > list->_actualBufferSize) {
         list->_actualBufferSize *= 2;
-        uchar *newPointer = realloc(list->_data, list->_actualBufferSize);
+        uchar *newPointer = realloc(list->_data, list->_actualBufferSize * list->_sizeOfElement);
         if (newPointer == NULL) {
             list->_actualBufferSize /= 2;
-            return;
+            return newPointer;
         }
         list->_data = newPointer;
         pointerToEnd = list->_data + list->_length * list->_sizeOfElement;
@@ -239,6 +243,13 @@ void LC_ListAdd(LC_List *list, void *element) {
     }
     memcpy(pointerToEnd, bytes, list->_sizeOfElement);
     list->_length++;
+    return pointerToEnd;
+}
+
+void* LC_ListGetElement(const LC_List *list, uint32 index) {
+    if (index >= list->_length) return NULL;
+
+    return list->_data + index * list->_sizeOfElement;
 }
 
 void LC_ListDestroy(LC_List *list) {

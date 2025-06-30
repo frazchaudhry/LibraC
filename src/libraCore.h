@@ -70,8 +70,11 @@ typedef struct list {
     size_t _sizeOfElement;
 } LC_List;
 
+
 void LC_ListInitialize(LC_List *list, size_t sizeOfElement);
-void LC_ListAdd(LC_List *list, void *element);
+void* LC_ListGetData(const LC_List *list);
+void* LC_ListAddElement(LC_List *list, const void *element);
+void* LC_ListGetElement(const LC_List *list, uint32 index);
 void LC_ListDestroy(LC_List *list);
 
 // ===================================================================================================================
