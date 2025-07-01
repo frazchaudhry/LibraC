@@ -61,7 +61,7 @@ typedef struct gameText {
     uint32 charsToIncludeInFontAtlas;
     stbtt_packedchar *packedChars;
     stbtt_aligned_quad *alignedQuads;
-    LC_GL_Text *textList;
+    LC_List *textList;
     int32 totalVertices;
     int64 sizeOfBuffer;
     float *buffer;
@@ -90,6 +90,8 @@ typedef struct color {
 
 void LC_InitializeColor(float red, float green, float blue, float alpha, LC_Color *color);
 LC_Color LC_CreateColor(float red, float green, float blue, float alpha);
+
+void LC_AddStaticText(const LC_GL_GameText *gameText, char *text, float posX, float posY, LC_Color color, float size);
 
 typedef struct gameState {
     int32 screenWidth;

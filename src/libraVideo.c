@@ -197,6 +197,9 @@ bool LC_GL_InitializeTextRenderer(LC_Arena *arena, LC_GL_GameText *gameText, con
     glTextureSubImage2D(gameText->fontAtlasTextureId, 0, 0, 0, fontAtlasWidth, fontAtlasHeight, GL_RED, GL_UNSIGNED_BYTE,
                         fontAtlasBitmap);
 
+    gameText->textList = LC_AllocateArena(arena, sizeof(LC_List));
+    LC_ListInitialize(gameText->textList, sizeof(LC_GL_Text));
+
     LC_FreeAllArena(&localArena);
     return true;
 }
@@ -290,6 +293,7 @@ void LC_GL_InsertTextBytesIntoBuffer(float *buffer, uint64 *bufferOffset, const 
 }
 
 void LC_GL_SetupVaoAndVboText(LC_GL_GameText *gameText) {
+    if (LC_ListGetLength(gameText->textList) <= 0) return;
     glCreateBuffers(1, &gameText->vbo);
     glNamedBufferStorage(gameText->vbo, gameText->sizeOfBuffer, gameText->buffer, GL_DYNAMIC_STORAGE_BIT);
 
@@ -315,30 +319,12 @@ void LC_GL_SetupVaoAndVboText(LC_GL_GameText *gameText) {
 }
 
 void LC_GL_RenderTextBegin(LC_Arena *arena, LC_GL_GameText *gameText) {
-    LC_String hello;
-    LC_InitializeString(&hello, "Hello World!");
-    const LC_GL_Text text1 = {
-        .string = hello,
-        .position = { 15.0f, 48.0f, 1.0f },
-        .color = { 1.0f, 0.0f, 0.757f, 1.0f },
-        .scale = 1.0f
-    };
-    LC_String s2;
-    LC_InitializeString(&s2, "Another One!");
-    const LC_GL_Text text2 = {
-        .string = s2,
-        .position = { 200.0f, 450.0f, 1.0f },
-        .color = { 0.2f, 0.58f, 0.9f, 1.0f },
-        .scale = 1.0f
-    };
+    if (LC_ListGetLength(gameText->textList) <= 0) return;
 
-    gameText->textList = LC_AllocateArena(arena, sizeof(LC_GL_Text) * 2);
-    gameText->textList[0] = text1;
-    gameText->textList[1] = text2;
+    LC_GL_Text *texts = LC_ListGetData(gameText->textList);
 
-    LC_GL_Text *texts = gameText->textList;
     uint64 totalCharacters = 0;
-    for (size_t i = 0; i < 2; i++) {
+    for (size_t i = 0; i < LC_ListGetLength(gameText->textList); i++) {
         totalCharacters += LC_GetStringLengthSkipSpaces(&texts[i].string);
     }
 
@@ -360,6 +346,8 @@ void LC_GL_RenderTextBegin(LC_Arena *arena, LC_GL_GameText *gameText) {
 }
 
 void LC_GL_RenderText(const LC_GL_GameText *gameText, const mat4 *viewProjectionMatrix) {
+    if (LC_ListGetLength(gameText->textList) <= 0) return;
+
     glEnable(GL_CULL_FACE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -379,6 +367,7 @@ void LC_GL_RenderText(const LC_GL_GameText *gameText, const mat4 *viewProjection
 }
 
 void LC_GL_RenderTextEnd(const LC_GL_GameText *gameText) {
+    if (LC_ListGetLength(gameText->textList) <= 0) return;
     // Unbind the Texture Unit
     glBindTextureUnit(0, 0);
 
@@ -387,6 +376,10 @@ void LC_GL_RenderTextEnd(const LC_GL_GameText *gameText) {
 }
 
 void LC_GL_DeleteTextRenderer(const LC_GL_GameText *gameText) {
+    LC_ListDestroy(gameText->textList);
+
+    if (LC_ListGetLength(gameText->textList) <= 0) return;
+
     glDeleteBuffers(1, &gameText->vao);
     glDeleteBuffers(1, &gameText->vbo);
     glDeleteTextures(1, &gameText->fontAtlasTextureId);
@@ -412,6 +405,20 @@ LC_Color LC_CreateColor(const float red, const float green, const float blue, co
         .a = alpha
     };
     return color;
+}
+
+void LC_AddStaticText(const LC_GL_GameText *gameText, char *text, const float posX, const float posY,
+                      const LC_Color color, const float size) {
+    LC_String string;
+    LC_InitializeString(&string, text);
+    const LC_GL_Text textToAdd = {
+        .string = string,
+        .position = { posX, posY, 1.0f },
+        .color = { color.r, color.g, color.b, color.a },
+        .scale = size
+    };
+
+    LC_ListAddElement(gameText->textList, &textToAdd);
 }
 
 int32 LC_GL_InitializeVideo(LC_Arena *arena, LC_GL_GameState *gameState, const char *title, char *errorLog) {

@@ -72,6 +72,7 @@ typedef struct list {
 
 
 void LC_ListInitialize(LC_List *list, size_t sizeOfElement);
+uint32 LC_ListGetLength(const LC_List *list);
 void* LC_ListGetData(const LC_List *list);
 void* LC_ListAddElement(LC_List *list, const void *element);
 void* LC_ListGetElement(const LC_List *list, uint32 index);

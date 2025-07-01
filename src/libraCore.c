@@ -223,6 +223,10 @@ void LC_ListInitialize(LC_List *list, const size_t sizeOfElement) {
     list->_data = calloc(list->_actualBufferSize, list->_sizeOfElement);
 }
 
+uint32 LC_ListGetLength(const LC_List *list) {
+    return list->_length;
+}
+
 void* LC_ListGetData(const LC_List *list) {
     return list->_data;
 }
