@@ -5,7 +5,11 @@
 #include <string.h>
 #include <time.h>
 
+#ifdef _WIN32
 #include "windows/libraC-windows.h"
+#elif __linux__
+#include "linux//libraC-linux.h"
+#endif
 
 // ===================================================================================================================
 // Strings and String Operations

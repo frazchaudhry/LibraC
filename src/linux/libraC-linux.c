@@ -9,7 +9,7 @@
 
 #include <libraC.h>
 
-void LC_Win32_GetCurrentWorkingDirectory(char* buffer, const size_t size) {
+void LC_Linux_GetCurrentWorkingDirectory(char* buffer, const size_t size) {
     getcwd(buffer, (int32)size);
 }
 
