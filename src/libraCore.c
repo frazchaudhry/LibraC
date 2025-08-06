@@ -175,7 +175,7 @@ void LC_GetFileContentString(LC_Arena *arena, const char *filePath, char **fileC
     fseek(file, 0, SEEK_END);
     // Traverse the file from the beginning of the file to the current position. The current position of the pointer
     // was set to be the end of the file with SEEK_END in the previous statement.
-    const int32 length = ftell(file);
+    const int32 length = (int32)ftell(file);
     // Move the pointer of the current position back to the beginning of the file
     fseek(file, 0, SEEK_SET);
 
@@ -305,7 +305,7 @@ int32 LC_QSIntegersPartition(int32 *array, const int32 low, const int32 high) {
 
 void LC_MergeSortIntegers(int32 *array, const uint32 size) {
     if (size <= 0) return;
-    LC_MergeSortIntegersRecursive(array, 0, size - 1);
+    LC_MergeSortIntegersRecursive(array, 0, (int32)size - 1);
 }
 
 void LC_MergeSortIntegersRecursive(int32 *array, const int32 low, const int32 high) {

@@ -376,9 +376,8 @@ void LC_GL_RenderTextEnd(const LC_GL_GameText *gameText) {
 }
 
 void LC_GL_DeleteTextRenderer(const LC_GL_GameText *gameText) {
-    LC_ListDestroy(gameText->textList);
-
     if (LC_ListGetLength(gameText->textList) <= 0) return;
+    LC_ListDestroy(gameText->textList);
 
     glDeleteBuffers(1, &gameText->vao);
     glDeleteBuffers(1, &gameText->vbo);
