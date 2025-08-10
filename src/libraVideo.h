@@ -5,7 +5,7 @@
 #ifndef LIBRAVIDEO_H
 #define LIBRAVIDEO_H
 
-#include <external/stb_truetype.h>
+#include <stb_truetype.h>
 
 #include <libraC.h>
 #include "libraCore.h"

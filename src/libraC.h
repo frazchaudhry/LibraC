@@ -6,7 +6,7 @@
 #define LIBRAC_H
 
 #include <typedefs.h>
-#include <external/cglm/cglm.h>
+#include <cglm.h>
 #include <glad/glad.h>
 #include <glfw3.h>
 

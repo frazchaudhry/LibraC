@@ -4,8 +4,8 @@ project(LibraC C)
 set(CMAKE_C_STANDARD 23)
 
 add_subdirectory(src)
-add_subdirectory(src/external/GLAD)
-add_subdirectory(src/external/glfw)
+add_subdirectory(external/GLAD)
+add_subdirectory(external/glfw)
 add_subdirectory(src/windows)
 add_subdirectory(src/linux)
 
@@ -19,7 +19,7 @@ add_library(LibraC STATIC src/libraCore.c
         src/libraMath.h
         src/libraMath.c)
 
-target_include_directories(LibraC PUBLIC src src/external/glfw/include/GLFW)
+target_include_directories(LibraC PUBLIC src external external/glfw/include/GLFW external/cglm)
 
 target_link_libraries(LibraC PUBLIC glfw glad)
 
