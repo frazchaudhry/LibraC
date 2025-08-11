@@ -34,6 +34,7 @@ add_library(LibraC STATIC src/libraCore.c
     src/linux/libraC-linux.c
     src/libraMath.h
     src/libraMath.c)
+add_compile_options(-Wall -Wextra -Wfatal-errors)
 
 target_include_directories(LibraC PUBLIC src external external/glfw/include/GLFW external/cglm)
 

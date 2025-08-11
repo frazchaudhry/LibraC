@@ -276,6 +276,7 @@ void LC_QuickSortIntegers(int32 *array, const int32 length) {
     LC_QuickSortIntegersRecursive(array, 0, length - 1);
 }
 
+// NOLINTNEXTLINE(misc-no-recursion)
 void LC_QuickSortIntegersRecursive(int32 *array, const int32 low, int32 high) {
     if (low < high) {
         const int pivotIndex = LC_QSIntegersPartition(array, low, high);
@@ -285,6 +286,7 @@ void LC_QuickSortIntegersRecursive(int32 *array, const int32 low, int32 high) {
 }
 
 int32 LC_QSIntegersPartition(int32 *array, const int32 low, const int32 high) {
+    //NOLINTNEXTLINE(cert-msc50-cpp)
     const int32 pivotIndex = low + (rand() % (high - low));
     bool success;
     if (pivotIndex != high) LC_SwapValues(&array[pivotIndex], &array[high], sizeof(int32), &success);
@@ -308,6 +310,7 @@ void LC_MergeSortIntegers(int32 *array, const uint32 size) {
     LC_MergeSortIntegersRecursive(array, 0, (int32)size - 1);
 }
 
+// NOLINTNEXTLINE(misc-no-recursion)
 void LC_MergeSortIntegersRecursive(int32 *array, const int32 low, const int32 high) {
     if (high <= low) return;
 
