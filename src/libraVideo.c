@@ -517,8 +517,8 @@ void LC_GL_RenderEnd(const LC_GL_GameState *gameState) {
 }
 
 void LC_GL_FreeResources(const LC_GL_GameState *gameState) {
-    glfwTerminate();
     LC_GL_DeleteTextRenderer(gameState->gameText);
+    glfwTerminate();
 }
 
 // ==================================================================================================================
