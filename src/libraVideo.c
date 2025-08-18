@@ -421,36 +421,37 @@ void LC_AddStaticText(const LC_GL_GameText *gameText, char *text, const float po
 }
 
 int32 LC_GL_InitializeVideo(LC_Arena *arena, LC_GL_GameState *gameState, const char *title, char *errorLog) {
-    if (!glfwInit()) {
+    if (!SDL_InitSubSystem(SDL_INIT_VIDEO)) {
         const char *errorDesc;
-        glfwGetError(&errorDesc);
-        sprintf(errorLog, "Couldn't initialize GLFW: %s", errorDesc);
+        snprintf(errorLog, 1024, "Could not initialize SDLSubSystem Video: %s", SDL_GetError());
         return EXIT_FAILURE;
     }
+    SDL_GL_LoadLibrary(nullptr);
 
     /* Set OpenGL settings. */
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
     /* Create the window */
-    gameState->window = glfwCreateWindow(gameState->screenWidth, gameState->screenHeight, title, nullptr, nullptr);
+    gameState->window = SDL_CreateWindow(title, gameState->screenWidth, gameState->screenHeight,
+                                         SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
     if (!gameState->window) {
-        const char *errorDesc;
-        glfwGetError(&errorDesc);
-        sprintf(errorLog, "Couldn't create window and renderer: %s", errorLog);
+        snprintf(errorLog, 1024, "Couldn't create window: %s", SDL_GetError());
         return EXIT_FAILURE;
     }
 
     // Get the OpenGL context
-    glfwMakeContextCurrent(gameState->window);
-    glfwSetFramebufferSizeCallback(gameState->window, LC_GL_FramebufferSizeCallback);
+    SDL_GLContext glContext = SDL_GL_CreateContext(gameState->window);
+    if (!glContext) {
+        snprintf(errorLog, 1024, "GL Context Error: %s", SDL_GetError());
+        return EXIT_FAILURE;
+    }
+    SDL_GL_MakeCurrent(gameState->window, glContext);
 
     // Initialize GLAD
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        const char *errorDesc;
-        glfwGetError(&errorDesc);
-        sprintf(errorLog, "Couldn't initialize GLAD: %s", errorDesc);
+    if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress)) {
+        snprintf(errorLog, 1024, "Couldn't initialize GLAD: %s", SDL_GetError());
         return EXIT_FAILURE;
     }
 
@@ -468,7 +469,7 @@ int32 LC_GL_InitializeVideo(LC_Arena *arena, LC_GL_GameState *gameState, const c
     return EXIT_SUCCESS;
 }
 
-void LC_GL_FramebufferSizeCallback(GLFWwindow *window, const int32 width, const int32 height) {
+void LC_GL_FramebufferSizeCallback(const int32 width, const int32 height) {
     glViewport(0, 0, width, height);
 }
 
@@ -510,15 +511,22 @@ void LC_GL_ClearBackground(const LC_Color color) {
     glClear(GL_COLOR_BUFFER_BIT);
 }
 
-void LC_GL_RenderEnd(const LC_GL_GameState *gameState) {
+void LC_GL_RenderEnd(const LC_GL_GameState *gameState, char *errorLog) {
     LC_GL_RenderTextEnd(gameState->gameText);
 
-    glfwSwapBuffers(gameState->window);
+    if (!SDL_GL_SwapWindow(gameState->window)) {
+        snprintf(errorLog, 1024, "Could not swap window!");
+    }
 }
 
 void LC_GL_FreeResources(const LC_GL_GameState *gameState) {
     LC_GL_DeleteTextRenderer(gameState->gameText);
-    glfwTerminate();
+    SDL_GLContext glContext = SDL_GL_GetCurrentContext();
+
+    SDL_GL_DestroyContext(glContext);
+    SDL_DestroyWindow(gameState->window);
+
+    SDL_QuitSubSystem(SDL_INIT_VIDEO);
 }
 
 // ==================================================================================================================

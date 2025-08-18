@@ -8,6 +8,6 @@
 #include <typedefs.h>
 #include <cglm.h>
 #include <glad/glad.h>
-#include <glfw3.h>
+#include <SDL3/SDL.h>
 
 #endif //LIBRAC_H

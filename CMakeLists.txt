@@ -20,7 +20,7 @@ enable_testing()
 
 add_subdirectory(src)
 add_subdirectory(external/GLAD)
-add_subdirectory(external/glfw)
+add_subdirectory(external/SDL)
 add_subdirectory(src/windows)
 add_subdirectory(src/linux)
 add_subdirectory(tests)
@@ -36,8 +36,8 @@ add_library(LibraC STATIC src/libraCore.c
     src/libraMath.c)
 add_compile_options(-Wall -Wextra -Wfatal-errors)
 
-target_include_directories(LibraC PUBLIC src external external/glfw/include/GLFW external/cglm)
+target_include_directories(LibraC PUBLIC src external external/cglm)
 
-target_link_libraries(LibraC PUBLIC glfw glad)
+target_link_libraries(LibraC PUBLIC SDL3::SDL3 glad -lm)
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC "$<$<CONFIG:Debug>:DEBUG>")
