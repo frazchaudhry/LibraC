@@ -140,7 +140,7 @@ bool LC_GL_InitializeTextRenderer(LC_Arena *arena, LC_GL_GameText *gameText, con
 
     LC_GL_Shader shader;
     if (!LC_GL_InitializeShader(&localArena, &shader, vertexShaderPath, fragmentShaderPath, errorLog)) {
-        printf(errorLog);
+        printf("%s", errorLog);
         return false;
     }
     gameText->fontShaderProgramId = shader.programId;
