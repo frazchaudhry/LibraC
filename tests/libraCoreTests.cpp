@@ -11,5 +11,6 @@ TEST(Utility, LC_SwapValues) {
     LC_SwapValues(&a, &b, sizeof(int), &success);
     ASSERT_EQ(a, 5);
     ASSERT_EQ(b, 10);
+    ASSERT_TRUE(success);
 }
 
