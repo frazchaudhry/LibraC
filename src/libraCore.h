@@ -13,6 +13,8 @@ typedef struct {
 } LC_String;
 
 void LC_InitializeString(LC_String *string, char *cString);
+bool LC_IsEqualStringCString(const LC_String *string, const char *cString);
+bool LC_IsEqualString(const LC_String *str1, const LC_String *str2);
 uint32 LC_GetStringLengthSkipSpaces(const LC_String *string);
 
 // ===================================================================================================================

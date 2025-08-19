@@ -1,5 +1,6 @@
 ﻿#include <libraCore.h>
 
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -24,6 +25,27 @@ void LC_InitializeString(LC_String *string, char *cString) {
 
     string->length = count;
     string->data = cString;
+}
+
+bool LC_IsEqualStringCString(const LC_String *string, const char *cString) {
+    size_t cStringLength = strlen(cString);
+    if (string->length != cStringLength) return false;
+
+    for (size_t i = 0; i < string->length; i++) {
+        if (string->data[i] != cString[i]) return false;
+    }
+
+    return true;
+}
+
+bool LC_IsEqualString(const LC_String *str1, const LC_String *str2) {
+    if (str1->length != str2->length) return false;
+    
+    for (size_t i = 0; i < str1->length; i++) {
+        if (str1->data[i] != str2->data[i]) return false;
+    }
+
+    return true;
 }
 
 uint32 LC_GetStringLengthSkipSpaces(const LC_String *string) {
