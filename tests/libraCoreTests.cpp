@@ -16,6 +16,7 @@ TEST(Strings, LC_InitializeString) {
 
     // Assert
     ASSERT_STREQ(string.data, "Hello, World!");
+    ASSERT_EQ(string.length, 13);
 }
 
 TEST(Strings, LC_IsEqualStringCString) {
@@ -23,11 +24,13 @@ TEST(Strings, LC_IsEqualStringCString) {
     LC_String string;
     char message[] = "Hello, World!";
     char wrongMessage[] = "Hello!";
+    char wrongAgain[] = "Hello, World@";
     LC_InitializeString(&string, message);
 
     // Act
     bool shouldBeTrue = LC_IsEqualStringCString(&string, message);
     bool shouldBeFalse = LC_IsEqualStringCString(&string, wrongMessage);
+    bool shouldBeAlsoFalse = LC_IsEqualStringCString(&string, wrongAgain);
 
     // Assert
     ASSERT_TRUE(shouldBeTrue);
