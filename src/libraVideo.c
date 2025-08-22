@@ -201,6 +201,7 @@ bool LC_GL_InitializeTextRenderer(LC_Arena *arena, LC_GL_GameText *gameText, con
     LC_ListInitialize(gameText->textList, sizeof(LC_GL_Text));
 
     LC_FreeAllArena(&localArena);
+    free(localArenaBuffer);
     return true;
 }
 
@@ -338,6 +339,7 @@ void LC_GL_RenderTextBegin(LC_Arena *arena, LC_GL_GameText *gameText) {
 
     uint64 currentBufferOffset = 0;
 
+    // TODO: This is a bug!
     for (size_t i = 0; i < 2; i++) {
         LC_GL_InsertTextBytesIntoBuffer(gameText->buffer, &currentBufferOffset, gameText, &texts[i]);
     }
