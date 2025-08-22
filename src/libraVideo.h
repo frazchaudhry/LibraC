@@ -101,7 +101,8 @@ typedef struct gameState {
     LC_GL_GameText *gameText;
 } LC_GL_GameState;
 
-int32 LC_GL_InitializeVideo(LC_Arena *arena, LC_GL_GameState *gameState, const char *title, char *errorLog);
+int32 LC_GL_InitializeVideo(LC_Arena *arena, LC_GL_GameState *gameState, const char *title, 
+                            const char *fontName, char *errorLog);
 void LC_GL_FramebufferSizeCallback(int32 width, int32 height);
 void LC_GL_GetOpenGLVersionInfo();
 void LC_GL_SetupViewProjectionMatrix2D(int32 screenWidth, int32 screenHeight, mat4 viewProjectionMatrix);

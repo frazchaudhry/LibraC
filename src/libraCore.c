@@ -244,7 +244,7 @@ void LC_GetFileContentBinary(LC_Arena *arena, const char *filePath, uchar **file
 
 void LC_ListInitialize(LC_List *list, const size_t sizeOfElement) {
     list->_sizeOfElement = sizeOfElement;
-    list->_actualBufferSize = 4;
+    list->_actualBufferSize = 16;
     list->_length = 0;
     list->_data = calloc(list->_actualBufferSize, list->_sizeOfElement);
 }

@@ -2,11 +2,14 @@
 // Created by Fraz Mahmud on 5/14/2025.
 //
 
+#include <GLES2/gl2.h>
 #define STB_TRUETYPE_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
 #include <libraVideo.h>
+
+static constexpr GLuint TEXT_STARTING_BUFFER_SIZE = 3600; // 4(sizeof(float)) * 100(Vertices) * 9 (Number of float per vertex)
 
 // =============================================SHADER===============================================================
 
@@ -294,9 +297,8 @@ void LC_GL_InsertTextBytesIntoBuffer(float *buffer, uint64 *bufferOffset, const 
 }
 
 void LC_GL_SetupVaoAndVboText(LC_GL_GameText *gameText) {
-    if (LC_ListGetLength(gameText->textList) <= 0) return;
     glCreateBuffers(1, &gameText->vbo);
-    glNamedBufferStorage(gameText->vbo, gameText->sizeOfBuffer, gameText->buffer, GL_DYNAMIC_STORAGE_BIT);
+    glNamedBufferStorage(gameText->vbo, TEXT_STARTING_BUFFER_SIZE, nullptr, GL_DYNAMIC_STORAGE_BIT);
 
     glCreateVertexArrays(1, &gameText->vao);
     constexpr GLuint vaoBindingPoint = 0;
@@ -339,12 +341,10 @@ void LC_GL_RenderTextBegin(LC_Arena *arena, LC_GL_GameText *gameText) {
 
     uint64 currentBufferOffset = 0;
 
-    // TODO: This is a bug!
+    // WARN: This is a bug! Hard coded 2. Won't print more than two in the list
     for (size_t i = 0; i < 2; i++) {
         LC_GL_InsertTextBytesIntoBuffer(gameText->buffer, &currentBufferOffset, gameText, &texts[i]);
     }
-
-    LC_GL_SetupVaoAndVboText(gameText);
 }
 
 void LC_GL_RenderText(const LC_GL_GameText *gameText, const mat4 *viewProjectionMatrix) {
@@ -364,17 +364,17 @@ void LC_GL_RenderText(const LC_GL_GameText *gameText, const mat4 *viewProjection
 
     // Render here
     glBindVertexArray(gameText->vao);
-    // glNamedBufferSubData(gameState.gameText->vbo, 0, SIZE_OF_BUFFER, gameState.gameText->buffer);
+    glNamedBufferSubData(gameText->vbo, 0, gameText->sizeOfBuffer, gameText->buffer);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, gameText->totalVertices);
 }
 
 void LC_GL_RenderTextEnd(const LC_GL_GameText *gameText) {
     if (LC_ListGetLength(gameText->textList) <= 0) return;
     // Unbind the Texture Unit
-    glBindTextureUnit(0, 0);
+    glBindTextureUnit(0, gameText->fontAtlasTextureId);
 
     // Unbind Vertex Array
-    glBindVertexArray(0);
+    glBindVertexArray(gameText->vao);
 }
 
 void LC_GL_DeleteTextRenderer(const LC_GL_GameText *gameText) {
@@ -422,7 +422,8 @@ void LC_AddStaticText(const LC_GL_GameText *gameText, char *text, const float po
     LC_ListAddElement(gameText->textList, &textToAdd);
 }
 
-int32 LC_GL_InitializeVideo(LC_Arena *arena, LC_GL_GameState *gameState, const char *title, char *errorLog) {
+int32 LC_GL_InitializeVideo(LC_Arena *arena, LC_GL_GameState *gameState, const char *title, const char *fontName,
+                            char *errorLog) {
     if (!SDL_InitSubSystem(SDL_INIT_VIDEO)) {
         const char *errorDesc;
         snprintf(errorLog, 1024, "Could not initialize SDLSubSystem Video: %s", SDL_GetError());
@@ -463,10 +464,12 @@ int32 LC_GL_InitializeVideo(LC_Arena *arena, LC_GL_GameState *gameState, const c
 
     glViewport(0, 0, gameState->screenWidth, gameState->screenHeight);
 
-    LC_GL_InitializeTextRenderer(arena, gameState->gameText, "fonts/Pong-Game.ttf", 48.0f,
-                                 "shaders/text.vert", "shaders/text.frag", errorLog);
-
     LC_GL_SetupViewProjectionMatrix2D(gameState->screenWidth, gameState->screenHeight, gameState->viewProjectionMatrix);
+
+    LC_GL_InitializeTextRenderer(arena, gameState->gameText, fontName, 48.0f,
+                                 "shaders/text.vert", "shaders/text.frag", errorLog);
+    LC_GL_SetupVaoAndVboText(gameState->gameText);
+
 
     return EXIT_SUCCESS;
 }
