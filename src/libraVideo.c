@@ -392,7 +392,6 @@ LC_Color LC_CreateColor(const float red, const float green, const float blue, co
 int32 LC_GL_InitializeVideo(LC_Arena *arena, LC_GL_GameState *gameState, const char *title, const char *fontName,
                             char *errorLog) {
     if (!SDL_InitSubSystem(SDL_INIT_VIDEO)) {
-        const char *errorDesc;
         snprintf(errorLog, 1024, "Could not initialize SDLSubSystem Video: %s", SDL_GetError());
         return EXIT_FAILURE;
     }
