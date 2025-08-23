@@ -140,7 +140,7 @@ bool LC_GL_InitializeTextRenderer(LC_Arena *arena, LC_GL_GameText *gameText, con
                                   const char *vertexShaderPath, const char *fragmentShaderPath, char *errorLog) {
     constexpr size_t STARTING_ARENA_SIZE = 300 * 1024;
     void *localArenaBuffer = malloc(STARTING_ARENA_SIZE);
-    LC_Arena localArena = { nullptr };
+    LC_Arena localArena;
     LC_InitializeArena(&localArena, localArenaBuffer, STARTING_ARENA_SIZE);
 
     LC_GL_Shader shader;
@@ -208,8 +208,8 @@ bool LC_GL_InitializeTextRenderer(LC_Arena *arena, LC_GL_GameText *gameText, con
 }
 
 void LC_GL_InsertTextBytesIntoBuffer(float *buffer, const LC_GL_GameText *gameText, const LC_GL_Text *text) {
-    const uint32 codePointOfFirstCharacter = gameText->codePointOfFirstCharacter;
-    const uint32 charsToIncludeInFontAtlas = gameText->charsToIncludeInFontAtlas;
+    const char codePointOfFirstCharacter = gameText->codePointOfFirstCharacter;
+    const char charsToIncludeInFontAtlas = gameText->charsToIncludeInFontAtlas;
     const float fontSize = gameText->fontSize;
     vec3 localPosition = { text->position[0], text->position[1], text->position[2] };
     uint32 bufferPosition = 0;

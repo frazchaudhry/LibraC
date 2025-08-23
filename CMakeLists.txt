@@ -34,10 +34,10 @@ add_library(LibraC STATIC src/libraCore.c
     src/linux/libraC-linux.c
     src/libraMath.h
     src/libraMath.c)
-add_compile_options(-Wall -Wextra -Wfatal-errors)
+target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wfatal-errors)
 
-target_include_directories(LibraC PUBLIC src external external/cglm)
+target_include_directories(${PROJECT_NAME} PUBLIC src external external/cglm)
 
-target_link_libraries(LibraC PUBLIC SDL3::SDL3 glad -lm)
+target_link_libraries(${PROJECT_NAME} PUBLIC SDL3::SDL3 glad -lm)
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC "$<$<CONFIG:Debug>:DEBUG>")

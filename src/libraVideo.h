@@ -31,8 +31,8 @@ typedef struct gameText {
     GLuint fontShaderProgramId;
     char *fontName;
     float fontSize;
-    uint32 codePointOfFirstCharacter;
-    uint32 charsToIncludeInFontAtlas;
+    char codePointOfFirstCharacter;
+    char charsToIncludeInFontAtlas;
     stbtt_packedchar *packedChars;
     stbtt_aligned_quad *alignedQuads;
 } LC_GL_GameText;

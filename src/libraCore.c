@@ -133,9 +133,9 @@ void LC_InitializeArena(LC_Arena *arena, void *backingBuffer, const size_t backi
     arena->previousOffset = 0;
 }
 
-void LC_FreeArena(LC_Arena *arena, void *pointer) {
+// void LC_FreeArena(LC_Arena *arena, void *pointer) {
     // do nothing
-}
+// }
 
 void *LC_ResizeAndAlignArena(LC_Arena *arena, void *oldMemory, const size_t oldSize, const size_t newSize,
                              const size_t align) {
@@ -349,9 +349,9 @@ void LC_MergeIntegers(int32 *array, const int32 low, const int32 mid, const int3
 
     int32 left[n1], right[n2];
 
-    for (size_t i = 0; i < n1; i++)
+    for (size_t i = 0; (int32)i < n1; i++)
         left[i] = array[low + i];
-    for (size_t j = 0; j < n2; j++)
+    for (size_t j = 0; (int32)j < n2; j++)
         right[j] = array[mid + 1 + j];
 
     // Maintain current index of sub-arrays and main array
