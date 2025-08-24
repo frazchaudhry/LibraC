@@ -86,7 +86,7 @@ bool LC_GL_InitializeTextRenderer(LC_Arena *arena, LC_GL_GameText *gameText, con
 void LC_GL_InsertTextBytesIntoBuffer(float *buffer, const LC_GL_GameText *gameText,
                                      const LC_GL_Text *text);
 void LC_GL_SetupVaoAndVboText(LC_GL_GameText *gameText);
-void LC_GL_DrawText(LC_Arena *arena, LC_GL_GameState *gameState, const LC_GL_Text *text);
+void LC_GL_RenderText(LC_GL_GameState *gameState, const LC_GL_Text *text);
 
 // ==================================================================================================================
 
@@ -95,17 +95,13 @@ void LC_GL_DrawText(LC_Arena *arena, LC_GL_GameState *gameState, const LC_GL_Tex
 void LC_InitializeColor(float red, float green, float blue, float alpha, LC_Color *color);
 LC_Color LC_CreateColor(float red, float green, float blue, float alpha);
 
-void LC_AddStaticText(const LC_GL_GameText *gameText, char *text, float posX, float posY, LC_Color color, float size);
-
 int32 LC_GL_InitializeVideo(LC_Arena *arena, LC_GL_GameState *gameState, const char *title, 
                             const char *fontName, char *errorLog);
 void LC_GL_FramebufferSizeCallback(int32 width, int32 height);
 void LC_GL_GetOpenGLVersionInfo();
 void LC_GL_SetupViewProjectionMatrix2D(int32 screenWidth, int32 screenHeight, mat4 viewProjectionMatrix);
-void LC_GL_RenderBegin(LC_Arena *arena, const LC_GL_GameState *gameState);
-void LC_GL_Render(const LC_GL_GameState *gameState);
 void LC_GL_ClearBackground(LC_Color color);
-void LC_GL_RenderEnd(const LC_GL_GameState *gameState, char *errorLog);
+bool LC_GL_SwapBuffer(SDL_Window *window, char *errorLog);
 void LC_GL_FreeResources(const LC_GL_GameState *gameState);
 
 // ==================================================================================================================

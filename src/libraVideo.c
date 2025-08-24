@@ -2,6 +2,7 @@
 // Created by Fraz Mahmud on 5/14/2025.
 //
 
+#include "SDL3/SDL_video.h"
 #include "libraCore.h"
 #include <libraVideo.h>
 
@@ -320,9 +321,7 @@ void LC_GL_SetupVaoAndVboText(LC_GL_GameText *gameText) {
     glVertexArrayAttribBinding(gameText->vao, texCoordIndex, vaoBindingPoint);
 }
 
-void LC_GL_DrawText(LC_Arena *arena, LC_GL_GameState *gameState, const LC_GL_Text *text) {
-    const TemporaryArenaMemory temporaryArenaMemory = LC_BeginTemporaryArenaMemory(arena);
-
+void LC_GL_RenderText(LC_GL_GameState *gameState, const LC_GL_Text *text) {
     uint64 totalCharacters = LC_GetStringLengthSkipSpaces(&text->string);
 
     // Each quad has 4 vertices
@@ -331,7 +330,7 @@ void LC_GL_DrawText(LC_Arena *arena, LC_GL_GameState *gameState, const LC_GL_Tex
     constexpr uint32 NUMBER_OF_FLOATS_PER_VERTEX = 9; // 3 for position, 4 for color, 2 for texture coordinates
     const GLuint sizeOfBuffer = (int64)sizeof(float) * totalVertices * NUMBER_OF_FLOATS_PER_VERTEX;
 
-    float *buffer = LC_AllocateArena(arena, sizeOfBuffer);
+    float buffer[sizeOfBuffer];
 
     LC_GL_InsertTextBytesIntoBuffer(buffer, gameState->gameText, text);
 
@@ -357,8 +356,6 @@ void LC_GL_DrawText(LC_Arena *arena, LC_GL_GameState *gameState, const LC_GL_Tex
 
     // Unbind Vertex Array
     glBindVertexArray(gameState->gameText->vao);
-
-    LC_EndTemporaryArena(temporaryArenaMemory);
 }
 
 void LC_GL_DeleteTextRenderer(const LC_GL_GameText *gameText) {
@@ -445,10 +442,10 @@ void LC_GL_FramebufferSizeCallback(const int32 width, const int32 height) {
 }
 
 void LC_GL_GetOpenGLVersionInfo() {
-    printf("\n\nVendor: %s", (char*)glGetString(GL_VENDOR));
-    printf("\nRenderer: %s", (char*)glGetString(GL_RENDERER));
-    printf("\nVersion: %s", (char*)glGetString(GL_VERSION));
-    printf("\nShading Language: %s\n\n", (char*)glGetString(GL_SHADING_LANGUAGE_VERSION));
+    SDL_Log("\n\nVendor: %s", (char*)glGetString(GL_VENDOR));
+    SDL_Log("\nRenderer: %s", (char*)glGetString(GL_RENDERER));
+    SDL_Log("\nVersion: %s", (char*)glGetString(GL_VERSION));
+    SDL_Log("\nShading Language: %s\n\n", (char*)glGetString(GL_SHADING_LANGUAGE_VERSION));
 }
 
 void LC_GL_SetupViewProjectionMatrix2D(const int32 screenWidth, const int32 screenHeight, mat4 viewProjectionMatrix) {
@@ -472,6 +469,14 @@ void LC_GL_SetupViewProjectionMatrix2D(const int32 screenWidth, const int32 scre
 void LC_GL_ClearBackground(const LC_Color color) {
     glClearColor(color.r, color.b, color.g, color.a);
     glClear(GL_COLOR_BUFFER_BIT);
+}
+
+bool LC_GL_SwapBuffer(SDL_Window *window, char *errorLog) {
+    if (!SDL_GL_SwapWindow(window)) {
+        snprintf(errorLog, 1024, "Could not swap window!");
+        return false;
+    }
+    return true;
 }
 
 void LC_GL_FreeResources(const LC_GL_GameState *gameState) {
