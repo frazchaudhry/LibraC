@@ -8,6 +8,7 @@
 #include <stb_truetype.h>
 
 #include <libraC.h>
+#include "glad/glad.h"
 #include "libraCore.h"
 
 // =============================================STRUCTS==============================================================
@@ -39,17 +40,28 @@ typedef struct gameText {
 
 // GAME CORE
 typedef struct color {
-    float r;
-    float b;
-    float g;
-    float a;
+    float r;    // Value between 0.0f and 255.0f
+    float b;    // Value between 0.0f and 255.0f
+    float g;    // Value between 0.0f and 255.0f
+    float a;    // Value between 0.0f and 1.0f
 } LC_Color;
+
+typedef struct {
+    int32 x;
+    int32 y;
+    int32 w;
+    int32 h;
+} LC_Rect;
 
 typedef struct gameState {
     int32 screenWidth;
     int32 screenHeight;
     SDL_Window *window;
     mat4 viewProjectionMatrix;
+    GLuint defaultShaderProgramId;
+    GLuint defaultVertexArrayObject;
+    GLuint defaultVertexBufferObject;
+    GLuint defaultElementBufferObject;
     LC_GL_GameText *gameText;
 } LC_GL_GameState;
 
@@ -100,7 +112,10 @@ int32 LC_GL_InitializeVideo(LC_Arena *arena, LC_GL_GameState *gameState, const c
 void LC_GL_FramebufferSizeCallback(int32 width, int32 height);
 void LC_GL_GetOpenGLVersionInfo();
 void LC_GL_SetupViewProjectionMatrix2D(int32 screenWidth, int32 screenHeight, mat4 viewProjectionMatrix);
+void LC_GL_SetupDefaultRectRenderer(LC_Arena *arena, LC_GL_GameState *gameState, const char *vertexShaderPath, 
+                              const char *fragmentShaderPath, char *errorLog);
 void LC_GL_ClearBackground(LC_Color color);
+void LC_GL_RenderRectangle(LC_GL_GameState *gameState, const LC_Rect *rect, const LC_Color *color);
 bool LC_GL_SwapBuffer(SDL_Window *window, char *errorLog);
 void LC_GL_FreeResources(const LC_GL_GameState *gameState);
 

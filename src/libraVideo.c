@@ -2,7 +2,7 @@
 // Created by Fraz Mahmud on 5/14/2025.
 //
 
-#include "SDL3/SDL_video.h"
+#include "glad/glad.h"
 #include "libraCore.h"
 #include <libraVideo.h>
 
@@ -77,12 +77,12 @@ bool LC_GL_InitializeShader(LC_Arena *arena, LC_GL_Shader *shader, const char *v
     LC_GetFileContentString(arena, fragmentShaderPath, &fragmentShaderSource);
 
     if (!vertexShaderSource) {
-        sprintf(buffer, "ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ: vertex-shader");
+        snprintf(buffer, 1024, "ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ: vertex-shader");
         return false;
     }
     if (!fragmentShaderSource) {
         free(vertexShaderSource);
-        sprintf(buffer, "ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ: fragment-shader");
+        snprintf(buffer, 1024, "ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ: fragment-shader");
         return false;
     }
 
@@ -113,12 +113,12 @@ bool LC_GL_InitializeShader(LC_Arena *arena, LC_GL_Shader *shader, const char *v
 
 bool CheckCompileErrors(const GLuint programId, char *type, char *buffer) {
     int success;
-    char infoLog[1024];
+    char infoLog[512];
     if (strcmp(type, "PROGRAM") != 0) {
         glGetShaderiv(programId, GL_COMPILE_STATUS, &success);
         if (!success) {
             glGetShaderInfoLog(programId, 1024, nullptr, infoLog);
-            sprintf(buffer, "ERROR::SHADER_COMPILATION_ERROR of type: %s\n%s\n", type, infoLog);
+            snprintf(buffer, 1024, "ERROR::SHADER_COMPILATION_ERROR of type: %s\n%s\n", type, infoLog);
             return false;
         }
     }
@@ -126,7 +126,7 @@ bool CheckCompileErrors(const GLuint programId, char *type, char *buffer) {
         glGetProgramiv(programId, GL_LINK_STATUS, &success);
         if (!success) {
             glGetProgramInfoLog(programId, 1024, nullptr, infoLog);
-            sprintf(buffer, "ERROR::PROGRAM_LINKING_ERROR of type: %s\n%s\n", type, infoLog);
+            snprintf(buffer, 1024, "ERROR::PROGRAM_LINKING_ERROR of type: %s\n%s\n", type, infoLog);
             return false;
         }
     }
@@ -146,7 +146,7 @@ bool LC_GL_InitializeTextRenderer(LC_Arena *arena, LC_GL_GameText *gameText, con
 
     LC_GL_Shader shader;
     if (!LC_GL_InitializeShader(&localArena, &shader, vertexShaderPath, fragmentShaderPath, errorLog)) {
-        printf("%s", errorLog);
+        SDL_Log("%s", errorLog);
         return false;
     }
     gameText->fontShaderProgramId = shader.programId;
@@ -157,7 +157,7 @@ bool LC_GL_InitializeTextRenderer(LC_Arena *arena, LC_GL_GameText *gameText, con
 
     const int32 fontCount = stbtt_GetNumberOfFonts(fontBuffer);
     if (fontCount == -1) {
-        sprintf(errorLog, "\nThe font file doesn't correspond to valid font data");
+        snprintf(errorLog, 1024, "\nThe font file doesn't correspond to valid font data");
         return false;
     }
 
@@ -219,7 +219,7 @@ void LC_GL_InsertTextBytesIntoBuffer(float *buffer, const LC_GL_GameText *gameTe
         const char ch = text->string.data[i];
 
         if (ch < codePointOfFirstCharacter || ch > codePointOfFirstCharacter + charsToIncludeInFontAtlas) {
-            printf("\nCharacter '%c' with code point %d is not included in the font atlas", ch, (int)ch);
+            SDL_Log("\nCharacter '%c' with code point %d is not included in the font atlas", ch, (int)ch);
             continue;
         }
         // Handle newlines separately.
@@ -352,10 +352,15 @@ void LC_GL_RenderText(LC_GL_GameState *gameState, const LC_GL_Text *text) {
     glDrawArrays(GL_TRIANGLE_STRIP, 0, totalVertices);
 
     // Unbind the Texture Unit
-    glBindTextureUnit(0, gameState->gameText->fontAtlasTextureId);
+    glBindTextureUnit(0, 0);
 
     // Unbind Vertex Array
-    glBindVertexArray(gameState->gameText->vao);
+    glBindVertexArray(0);
+
+    glDisable(GL_CULL_FACE);
+    glDisable(GL_BLEND);
+
+    LC_GL_UseProgram(0);
 }
 
 void LC_GL_DeleteTextRenderer(const LC_GL_GameText *gameText) {
@@ -429,6 +434,8 @@ int32 LC_GL_InitializeVideo(LC_Arena *arena, LC_GL_GameState *gameState, const c
 
     LC_GL_SetupViewProjectionMatrix2D(gameState->screenWidth, gameState->screenHeight, gameState->viewProjectionMatrix);
 
+    LC_GL_SetupDefaultRectRenderer(arena, gameState, "shaders/default.vert", "shaders/default.frag", errorLog);
+
     LC_GL_InitializeTextRenderer(arena, gameState->gameText, fontName, 48.0f,
                                  "shaders/text.vert", "shaders/text.frag", errorLog);
     LC_GL_SetupVaoAndVboText(gameState->gameText);
@@ -466,9 +473,74 @@ void LC_GL_SetupViewProjectionMatrix2D(const int32 screenWidth, const int32 scre
     glm_mat4_mul(projection, view, viewProjectionMatrix);
 }
 
+void LC_GL_SetupDefaultRectRenderer(LC_Arena *arena, LC_GL_GameState *gameState, const char *vertexShaderPath, 
+                              const char *fragmentShaderPath, char *errorLog) {
+    LC_GL_Shader shader;
+    if (!LC_GL_InitializeShader(arena, &shader, vertexShaderPath, fragmentShaderPath, errorLog)) {
+        SDL_Log("%s", errorLog);
+    }
+    gameState->defaultShaderProgramId = shader.programId;
+
+    // Setup VAO, VBO, EBO
+    constexpr GLuint sizeOfBuffer = sizeof(float) * 4 * 7; // Size of float * number of vertices * stride(3 pos, 4 color)
+    //
+    const uint32 indices[] = {
+        0 , 1, 3,
+        1, 2, 3
+    };
+
+    glCreateBuffers(1, &gameState->defaultVertexBufferObject);
+    glNamedBufferStorage(gameState->defaultVertexBufferObject, sizeOfBuffer, nullptr, GL_DYNAMIC_STORAGE_BIT);
+
+    glCreateBuffers(1, &gameState->defaultElementBufferObject);
+    glNamedBufferStorage(gameState->defaultElementBufferObject, sizeof(indices), indices, GL_DYNAMIC_STORAGE_BIT);
+
+    glCreateVertexArrays(1, &gameState->defaultVertexArrayObject);
+    const GLuint vaoBindingPoint = 0;
+    glVertexArrayVertexBuffer(gameState->defaultVertexArrayObject, vaoBindingPoint, 
+                              gameState->defaultVertexBufferObject, 0, 7 * sizeof(float));
+    glVertexArrayElementBuffer(gameState->defaultVertexArrayObject, gameState->defaultElementBufferObject);
+
+    constexpr uint8 positionIndex = 0;
+    constexpr uint8 colorIndex = 1;
+
+    glEnableVertexArrayAttrib(gameState->defaultVertexArrayObject, positionIndex);
+    glEnableVertexArrayAttrib(gameState->defaultVertexArrayObject, colorIndex);
+
+    glVertexArrayAttribFormat(gameState->defaultVertexArrayObject, positionIndex, 3, GL_FLOAT, GL_FALSE, 0);
+    glVertexArrayAttribFormat(gameState->defaultVertexArrayObject, colorIndex, 4, GL_FLOAT, GL_FALSE, 3 * sizeof(float));
+
+    glVertexArrayAttribBinding(gameState->defaultVertexArrayObject, positionIndex, vaoBindingPoint);
+    glVertexArrayAttribBinding(gameState->defaultVertexArrayObject, colorIndex, vaoBindingPoint);
+}
+
 void LC_GL_ClearBackground(const LC_Color color) {
-    glClearColor(color.r, color.b, color.g, color.a);
+    glClearColor(color.r/255.0f, color.b/255.0f, color.g/255.0f, color.a);
     glClear(GL_COLOR_BUFFER_BIT);
+}
+
+void LC_GL_RenderRectangle(LC_GL_GameState *gameState, const LC_Rect *rect, const LC_Color *color) {
+    // Identify and setup vertices for position and color
+    const float vertices[] = {
+        (float)rect->x + (float)rect->w, (float)rect->y, 0.0f, color->r, color->g, color->b, color->a, // Top Right
+        (float)rect->x + (float)rect->w, (float)rect->y + (float)rect->h, 0.0f, color->r, color->g, color->b, color->a, // Bottom Right
+        (float)rect->x, (float)rect->y + (float)rect->h, 0.0f, color->r, color->g, color->b, color->a, // Bottom Left
+        (float)rect->x, (float)rect->y, 0.0f, (float)color->r, color->g, color->b, color->a, // Top Left
+    };
+
+    // Setup Before Render
+    LC_GL_UseProgram(gameState->defaultShaderProgramId);
+    LC_GL_SetUniformMat4(gameState->defaultShaderProgramId, "viewProjectionMatrix",
+                         &gameState->viewProjectionMatrix);
+    glBindVertexArray(gameState->defaultVertexArrayObject);
+    glNamedBufferSubData(gameState->defaultVertexBufferObject, 0, sizeof(vertices), vertices);
+
+    // Render
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+
+    // Unbind VAO
+    glBindVertexArray(0);
+
 }
 
 bool LC_GL_SwapBuffer(SDL_Window *window, char *errorLog) {
