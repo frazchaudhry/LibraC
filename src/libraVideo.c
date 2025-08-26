@@ -684,7 +684,7 @@ void LC_GL_RenderRectDSA(LC_GL_Renderer *renderer, const float *buffer, uint32 s
 
 void LC_GL_RenderRectNonDSA(LC_GL_Renderer *renderer, const float *buffer, uint32 sizeOfBuffer) {
     // Setup Before Render
-    glUseProgram(renderer->defaultShaderProgramId);
+    LC_GL_UseProgram(renderer->defaultShaderProgramId);
     LC_GL_SetUniformMat4(renderer->defaultShaderProgramId, "viewProjectionMatrix",
                          &renderer->viewProjectionMatrix);
     glBindVertexArray(renderer->defaultVertexArrayObject);
