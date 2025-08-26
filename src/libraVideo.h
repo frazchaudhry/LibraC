@@ -8,7 +8,6 @@
 #include <stb_truetype.h>
 
 #include <libraC.h>
-#include "glad/glad.h"
 #include "libraCore.h"
 
 // =============================================STRUCTS==============================================================
@@ -53,7 +52,7 @@ typedef struct {
     int32 h;
 } LC_Rect;
 
-typedef struct gameState {
+typedef struct renderer_gl {
     int32 screenWidth;
     int32 screenHeight;
     SDL_Window *window;
@@ -63,7 +62,9 @@ typedef struct gameState {
     GLuint defaultVertexBufferObject;
     GLuint defaultElementBufferObject;
     LC_GL_GameText *gameText;
-} LC_GL_GameState;
+    GLint glMajorVersion;
+    GLint glMinorVersion;
+} LC_GL_Renderer;
 
 // =============================================SHADER===============================================================
 
@@ -93,12 +94,19 @@ bool CheckCompileErrors(GLuint programId, char *type, char *buffer);
 
 // =============================================Text Rendering=======================================================
 
-bool LC_GL_InitializeTextRenderer(LC_Arena *arena, LC_GL_GameText *gameText, const char *fontName, float fontSize,
+bool LC_GL_InitializeTextRenderer(LC_Arena *arena, LC_GL_Renderer *renderer, const char *fontName, float fontSize,
                                   const char *vertexShaderPath, const char *fragmentShaderPath, char *errorLog);
+void LC_GL_CreateTextureTextDSA(LC_GL_GameText *gameText, int32 fontAtlasWidth, int32 fontAtlasHeight,
+                               const uchar *fontAtlasBitmap);
+void LC_GL_CreateTextureTextNonDSA(LC_GL_GameText *gameText, int32 fontAtlasWidth, int32 fontAtlasHeight,
+                               const uchar *fontAtlasBitmap);
+void LC_GL_SetupVaoAndVboTextDSA(LC_GL_GameText *gameText);
+void LC_GL_SetupVaoAndVboTextNonDSA(LC_GL_GameText *gameText);
+void LC_GL_RenderText(LC_GL_Renderer *renderer, const LC_GL_Text *text);
+void LC_GL_RenderTextDSA(LC_GL_Renderer *renderer, GLint totalVertices, GLuint sizeOfBuffer, const float *buffer);
+void LC_GL_RenderTextNonDSA(LC_GL_Renderer *renderer, GLint totalVertices, GLuint sizeOfBuffer, const float *buffer);
 void LC_GL_InsertTextBytesIntoBuffer(float *buffer, const LC_GL_GameText *gameText,
                                      const LC_GL_Text *text);
-void LC_GL_SetupVaoAndVboText(LC_GL_GameText *gameText);
-void LC_GL_RenderText(LC_GL_GameState *gameState, const LC_GL_Text *text);
 
 // ==================================================================================================================
 
@@ -107,17 +115,22 @@ void LC_GL_RenderText(LC_GL_GameState *gameState, const LC_GL_Text *text);
 void LC_InitializeColor(float red, float green, float blue, float alpha, LC_Color *color);
 LC_Color LC_CreateColor(float red, float green, float blue, float alpha);
 
-int32 LC_GL_InitializeVideo(LC_Arena *arena, LC_GL_GameState *gameState, const char *title, 
+int32 LC_GL_InitializeVideo(LC_Arena *arena, LC_GL_Renderer *renderer, const char *title, 
                             const char *fontName, char *errorLog);
 void LC_GL_FramebufferSizeCallback(int32 width, int32 height);
 void LC_GL_GetOpenGLVersionInfo();
+bool LC_GL_IsDSAAvailable(LC_GL_Renderer *renderer);
 void LC_GL_SetupViewProjectionMatrix2D(int32 screenWidth, int32 screenHeight, mat4 viewProjectionMatrix);
-void LC_GL_SetupDefaultRectRenderer(LC_Arena *arena, LC_GL_GameState *gameState, const char *vertexShaderPath, 
+void LC_GL_SetupDefaultRectRenderer(LC_Arena *arena, LC_GL_Renderer *renderer, const char *vertexShaderPath, 
                               const char *fragmentShaderPath, char *errorLog);
+void LC_GL_DefaultRectVAODSA(LC_GL_Renderer *renderer, const uint32 *indices,  GLuint sizeOfBuffer);
+void LC_GL_DefaultRectVAONonDSA(LC_GL_Renderer *renderer, const uint32 *indices, GLuint sizeOfBuffer);
 void LC_GL_ClearBackground(LC_Color color);
-void LC_GL_RenderRectangle(LC_GL_GameState *gameState, const LC_Rect *rect, const LC_Color *color);
+void LC_GL_RenderRectangle(LC_GL_Renderer *renderer, const LC_Rect *rect, const LC_Color *color);
+void LC_GL_RenderRectDSA(LC_GL_Renderer *renderer, const float *buffer, uint32 sizeOfBuffer);
+void LC_GL_RenderRectNonDSA(LC_GL_Renderer *renderer, const float *buffer, uint32 sizeOfBuffer);
 bool LC_GL_SwapBuffer(SDL_Window *window, char *errorLog);
-void LC_GL_FreeResources(const LC_GL_GameState *gameState);
+void LC_GL_FreeResources(const LC_GL_Renderer *renderer);
 
 // ==================================================================================================================
 
