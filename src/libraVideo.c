@@ -2,6 +2,7 @@
 // Created by Fraz Mahmud on 5/14/2025.
 //
 
+#include "glad/glad.h"
 #include <libraVideo.h>
 
 #define STB_TRUETYPE_IMPLEMENTATION
@@ -13,10 +14,6 @@
 static constexpr GLuint TEXT_STARTING_BUFFER_SIZE = 3600; // 4(sizeof(float)) * 100(Vertices) * 9 (Number of float per vertex)
 
 // =============================================SHADER===============================================================
-
-void LC_GL_UseProgram(const uint32 programId) {
-    glUseProgram(programId);
-}
 
 void LC_GL_SetUniformBool(const GLuint programId, const char *name, const bool value) {
     glUniform1i(glGetUniformLocation(programId, name), (int32)value);
@@ -306,7 +303,7 @@ void LC_GL_RenderText(LC_GL_Renderer *renderer, const LC_GL_Text *text) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    LC_GL_UseProgram(renderer->gameText->fontShaderProgramId);
+    glUseProgram(renderer->gameText->fontShaderProgramId);
 
     LC_GL_IsDSAAvailable(renderer) ? LC_GL_RenderTextDSA(renderer, totalVertices, sizeOfBuffer, buffer) :
         LC_GL_RenderTextNonDSA(renderer, totalVertices, sizeOfBuffer, buffer);
@@ -314,7 +311,7 @@ void LC_GL_RenderText(LC_GL_Renderer *renderer, const LC_GL_Text *text) {
     glDisable(GL_CULL_FACE);
     glDisable(GL_BLEND);
 
-    LC_GL_UseProgram(0);
+    glUseProgram(0);
 }
 
 void LC_GL_RenderTextDSA(LC_GL_Renderer *renderer, GLint totalVertices, GLuint sizeOfBuffer, const float *buffer) {
@@ -669,7 +666,7 @@ void LC_GL_RenderRectangle(LC_GL_Renderer *renderer, const LC_Rect *rect, const 
 
 void LC_GL_RenderRectDSA(LC_GL_Renderer *renderer, const float *buffer, uint32 sizeOfBuffer) {
     // Setup Before Render
-    LC_GL_UseProgram(renderer->defaultShaderProgramId);
+    glUseProgram(renderer->defaultShaderProgramId);
     LC_GL_SetUniformMat4(renderer->defaultShaderProgramId, "viewProjectionMatrix",
                          &renderer->viewProjectionMatrix);
     glBindVertexArray(renderer->defaultVertexArrayObject);
@@ -684,7 +681,7 @@ void LC_GL_RenderRectDSA(LC_GL_Renderer *renderer, const float *buffer, uint32 s
 
 void LC_GL_RenderRectNonDSA(LC_GL_Renderer *renderer, const float *buffer, uint32 sizeOfBuffer) {
     // Setup Before Render
-    LC_GL_UseProgram(renderer->defaultShaderProgramId);
+    glUseProgram(renderer->defaultShaderProgramId);
     LC_GL_SetUniformMat4(renderer->defaultShaderProgramId, "viewProjectionMatrix",
                          &renderer->viewProjectionMatrix);
     glBindVertexArray(renderer->defaultVertexArrayObject);

@@ -72,8 +72,6 @@ bool LC_GL_InitializeShader(LC_Arena *arena, LC_GL_Shader *shader, const char *v
                             const char *fragmentShaderPath,
                             char *buffer);
 
-void LC_GL_UseProgram(GLuint programId);
-
 void LC_GL_SetUniformBool(GLuint programId, const char *name, bool value);
 void LC_GL_SetUniformInt(GLuint programId, const char *name, int32 value);
 void LC_GL_SetUniformFloat(GLuint programId, const char *name, float value);
