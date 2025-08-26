@@ -160,7 +160,7 @@ bool LC_GL_InitializeTextRenderer(LC_Arena *arena, LC_GL_Renderer *renderer, con
 
     const int32 fontCount = stbtt_GetNumberOfFonts(fontBuffer);
     if (fontCount == -1) {
-        snprintf(errorLog, 1024, "\nThe font file doesn't correspond to valid font data");
+        snprintf(errorLog, 1024, "The font file doesn't correspond to valid font data");
         return false;
     }
 
