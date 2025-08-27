@@ -12,10 +12,10 @@ typedef struct {
     char *data;
 } LC_String;
 
-void LC_InitializeString(LC_String *string, char *cString);
-bool LC_IsEqualStringCString(const LC_String *string, const char *cString);
-bool LC_IsEqualString(const LC_String *str1, const LC_String *str2);
-uint32 LC_GetStringLengthSkipSpaces(const LC_String *string);
+void LC_String_Initialize(LC_String *string, char *cString);
+bool LC_String_IsEqualCString(const LC_String *string, const char *cString);
+bool LC_String_IsEqual(const LC_String *str1, const LC_String *str2);
+uint32 LC_String_GetLengthSkipSpaces(const LC_String *string);
 
 // ===================================================================================================================
 // Utility Operations
@@ -45,15 +45,15 @@ typedef struct {
 bool LC_IsPowerOfTwo(uintptr_t x);
 uintptr_t LC_AlignForward(uintptr_t ptr, size_t align);
 void* LC_AllocateAndAlignArena(LC_Arena *arena, size_t size, size_t align);
-void* LC_AllocateArena(LC_Arena *arena, size_t size);
-void LC_InitializeArena(LC_Arena *arena, void *backingBuffer, size_t backingBufferLength);
-void LC_FreeArena(LC_Arena *arena, void *pointer);
-void* LC_ResizeAndAlignArena(LC_Arena *arena, void *oldMemory, size_t oldSize, size_t newSize, size_t align);
-void* LC_ResizeArena(LC_Arena *arena, void *oldMemory, size_t oldSize, size_t newSize);
-void LC_FreeAllArena(LC_Arena *arena);
+void* LC_Arena_Allocate(LC_Arena *arena, size_t size);
+void LC_Arena_Initialize(LC_Arena *arena, void *backingBuffer, size_t backingBufferLength);
+void LC_Arena_Free(LC_Arena *arena, void *pointer);
+void* LC_Arena_ResizeAndAlign(LC_Arena *arena, void *oldMemory, size_t oldSize, size_t newSize, size_t align);
+void* LC_Arena_Resize(LC_Arena *arena, void *oldMemory, size_t oldSize, size_t newSize);
+void LC_Arena_FreeAll(LC_Arena *arena);
 
-TemporaryArenaMemory LC_BeginTemporaryArenaMemory(LC_Arena *arena);
-void LC_EndTemporaryArena(TemporaryArenaMemory temporaryArena);
+TemporaryArenaMemory LC_Arena_BeginTemporaryMemory(LC_Arena *arena);
+void LC_Arena_EndTemporary(TemporaryArenaMemory temporaryArena);
 
 // ===================================================================================================================
 // File Operations
@@ -73,12 +73,12 @@ typedef struct list {
 } LC_List;
 
 
-void LC_ListInitialize(LC_List *list, size_t sizeOfElement);
-uint32 LC_ListGetLength(const LC_List *list);
-void* LC_ListGetData(const LC_List *list);
-void* LC_ListAddElement(LC_List *list, const void *element);
-void* LC_ListGetElement(const LC_List *list, uint32 index);
-void LC_ListDestroy(LC_List *list);
+void LC_List_Initialize(LC_List *list, size_t sizeOfElement);
+uint32 LC_List_GetLength(const LC_List *list);
+void* LC_List_GetData(const LC_List *list);
+void* LC_List_AddElement(LC_List *list, const void *element);
+void* LC_List_GetElement(const LC_List *list, uint32 index);
+void LC_List_Destroy(LC_List *list);
 
 // ===================================================================================================================
 // Sorting Algorithms

@@ -12,7 +12,7 @@ TEST(Strings, LC_InitializeString) {
     char message[] = "Hello, World!";
     
     // Act
-    LC_InitializeString(&string, message);
+    LC_String_Initialize(&string, message);
 
     // Assert
     ASSERT_STREQ(string.data, "Hello, World!");
@@ -25,12 +25,12 @@ TEST(Strings, LC_IsEqualStringCString) {
     char message[] = "Hello, World!";
     char wrongMessage[] = "Hello!";
     char wrongAgain[] = "Hello, World@";
-    LC_InitializeString(&string, message);
+    LC_String_Initialize(&string, message);
 
     // Act
-    bool shouldBeTrue = LC_IsEqualStringCString(&string, message);
-    bool shouldBeFalse = LC_IsEqualStringCString(&string, wrongMessage);
-    bool shouldBeAlsoFalse = LC_IsEqualStringCString(&string, wrongAgain);
+    bool shouldBeTrue = LC_String_IsEqualCString(&string, message);
+    bool shouldBeFalse = LC_String_IsEqualCString(&string, wrongMessage);
+    bool shouldBeAlsoFalse = LC_String_IsEqualCString(&string, wrongAgain);
 
     // Assert
     ASSERT_TRUE(shouldBeTrue);
@@ -41,18 +41,18 @@ TEST(Strings, LC_IsEqualString) {
     // Arrange
     LC_String string1;
     char message1[] = "Hello, World!";
-    LC_InitializeString(&string1, message1);
+    LC_String_Initialize(&string1, message1);
     LC_String string2;
     char message2[] = "Hello, World!";
-    LC_InitializeString(&string2, message2);
+    LC_String_Initialize(&string2, message2);
     LC_String wrongString;
     char wrongMessage[] = "Hello!";
-    LC_InitializeString(&wrongString, wrongMessage);
+    LC_String_Initialize(&wrongString, wrongMessage);
 
     // Act
-    bool shouldBeTrue = LC_IsEqualString(&string1, &string2);
-    bool shouldBeFalse = LC_IsEqualString(&string1, &wrongString);
-    bool shouldBeAlsoFalse = LC_IsEqualString(&string2, &wrongString);
+    bool shouldBeTrue = LC_String_IsEqual(&string1, &string2);
+    bool shouldBeFalse = LC_String_IsEqual(&string1, &wrongString);
+    bool shouldBeAlsoFalse = LC_String_IsEqual(&string2, &wrongString);
 
     // Assert
     ASSERT_TRUE(shouldBeTrue);

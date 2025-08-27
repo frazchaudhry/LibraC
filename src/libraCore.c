@@ -16,7 +16,7 @@
 // Strings and String Operations
 // ===================================================================================================================
 
-void LC_InitializeString(LC_String *string, char *cString) {
+void LC_String_Initialize(LC_String *string, char *cString) {
     uint32 count = 0;
 
     while (cString[count] != '\0') {
@@ -27,7 +27,7 @@ void LC_InitializeString(LC_String *string, char *cString) {
     string->data = cString;
 }
 
-bool LC_IsEqualStringCString(const LC_String *string, const char *cString) {
+bool LC_String_IsEqualCString(const LC_String *string, const char *cString) {
     size_t cStringLength = strlen(cString);
     if (string->length != cStringLength) return false;
 
@@ -38,7 +38,7 @@ bool LC_IsEqualStringCString(const LC_String *string, const char *cString) {
     return true;
 }
 
-bool LC_IsEqualString(const LC_String *str1, const LC_String *str2) {
+bool LC_String_IsEqual(const LC_String *str1, const LC_String *str2) {
     if (str1->length != str2->length) return false;
     
     for (size_t i = 0; i < str1->length; i++) {
@@ -48,7 +48,7 @@ bool LC_IsEqualString(const LC_String *str1, const LC_String *str2) {
     return true;
 }
 
-uint32 LC_GetStringLengthSkipSpaces(const LC_String *string) {
+uint32 LC_String_GetLengthSkipSpaces(const LC_String *string) {
     uint32 count = 0;
     if (string == NULL || string->data == NULL) return count;
 
@@ -122,11 +122,11 @@ void *LC_AllocateAndAlignArena(LC_Arena *arena, const size_t size, const size_t 
     return NULL;
 }
 
-void *LC_AllocateArena(LC_Arena *arena, const size_t size) {
+void *LC_Arena_Allocate(LC_Arena *arena, const size_t size) {
     return LC_AllocateAndAlignArena(arena, size, DEFAULT_ALIGNMENT);
 }
 
-void LC_InitializeArena(LC_Arena *arena, void *backingBuffer, const size_t backingBufferLength) {
+void LC_Arena_Initialize(LC_Arena *arena, void *backingBuffer, const size_t backingBufferLength) {
     arena->buffer = (uchar *) backingBuffer;
     arena->bufferLength = backingBufferLength;
     arena->currentOffset = 0;
@@ -137,7 +137,7 @@ void LC_InitializeArena(LC_Arena *arena, void *backingBuffer, const size_t backi
     // do nothing
 // }
 
-void *LC_ResizeAndAlignArena(LC_Arena *arena, void *oldMemory, const size_t oldSize, const size_t newSize,
+void *LC_Arena_ResizeAndAlign(LC_Arena *arena, void *oldMemory, const size_t oldSize, const size_t newSize,
                              const size_t align) {
     assert(LC_IsPowerOfTwo(align));
 
@@ -159,16 +159,16 @@ void *LC_ResizeAndAlignArena(LC_Arena *arena, void *oldMemory, const size_t oldS
     assert(0 && "Memory is out of bounds of the buffer in this arena");
 }
 
-void *LC_ResizeArena(LC_Arena *arena, void *oldMemory, const size_t oldSize, const size_t newSize) {
-    return LC_ResizeAndAlignArena(arena, oldMemory, oldSize, newSize, DEFAULT_ALIGNMENT);
+void *LC_Arena_Resize(LC_Arena *arena, void *oldMemory, const size_t oldSize, const size_t newSize) {
+    return LC_Arena_ResizeAndAlign(arena, oldMemory, oldSize, newSize, DEFAULT_ALIGNMENT);
 }
 
-void LC_FreeAllArena(LC_Arena *arena) {
+void LC_Arena_FreeAll(LC_Arena *arena) {
     arena->currentOffset = 0;
     arena->previousOffset = 0;
 }
 
-TemporaryArenaMemory LC_BeginTemporaryArenaMemory(LC_Arena *arena) {
+TemporaryArenaMemory LC_Arena_BeginTemporaryMemory(LC_Arena *arena) {
     TemporaryArenaMemory temporaryArena;
     temporaryArena.arena = arena;
     temporaryArena.previousOffset = arena->previousOffset;
@@ -177,7 +177,7 @@ TemporaryArenaMemory LC_BeginTemporaryArenaMemory(LC_Arena *arena) {
     return temporaryArena;
 }
 
-void LC_EndTemporaryArena(const TemporaryArenaMemory temporaryArena) {
+void LC_Arena_EndTemporary(const TemporaryArenaMemory temporaryArena) {
     temporaryArena.arena->previousOffset = temporaryArena.previousOffset;
     temporaryArena.arena->currentOffset = temporaryArena.currentOffset;
 }
@@ -202,7 +202,7 @@ void LC_GetFileContentString(LC_Arena *arena, const char *filePath, char **fileC
     fseek(file, 0, SEEK_SET);
 
     // Allocate memory for the string. We add 1 to the length to store the null terminating character '\0' at the end.
-    *fileContents = LC_AllocateArena(arena, sizeof(char) * (length + 1));
+    *fileContents = LC_Arena_Allocate(arena, sizeof(char) * (length + 1));
 
     char c;
     int32 i = 0;
@@ -229,7 +229,7 @@ void LC_GetFileContentBinary(LC_Arena *arena, const char *filePath, uchar **file
     *fileSize = ftell(file);
     fseek(file, 0, SEEK_SET);
 
-    *fileContents = LC_AllocateArena(arena, *fileSize);
+    *fileContents = LC_Arena_Allocate(arena, *fileSize);
     if (*fileContents == NULL) {
         fclose(file);
         return;
@@ -242,22 +242,22 @@ void LC_GetFileContentBinary(LC_Arena *arena, const char *filePath, uchar **file
 // Data Structures
 // ===================================================================================================================
 
-void LC_ListInitialize(LC_List *list, const size_t sizeOfElement) {
+void LC_List_Initialize(LC_List *list, const size_t sizeOfElement) {
     list->_sizeOfElement = sizeOfElement;
     list->_actualBufferSize = 16;
     list->_length = 0;
     list->_data = calloc(list->_actualBufferSize, list->_sizeOfElement);
 }
 
-uint32 LC_ListGetLength(const LC_List *list) {
+uint32 LC_List_GetLength(const LC_List *list) {
     return list->_length;
 }
 
-void* LC_ListGetData(const LC_List *list) {
+void* LC_List_GetData(const LC_List *list) {
     return list->_data;
 }
 
-void* LC_ListAddElement(LC_List *list, const void *element) {
+void* LC_List_AddElement(LC_List *list, const void *element) {
     const uchar *bytes = element;
     uchar *pointerToEnd = list->_data + list->_length * list->_sizeOfElement;
     if (list->_length + 1 > list->_actualBufferSize) {
@@ -276,13 +276,13 @@ void* LC_ListAddElement(LC_List *list, const void *element) {
     return pointerToEnd;
 }
 
-void* LC_ListGetElement(const LC_List *list, uint32 index) {
+void* LC_List_GetElement(const LC_List *list, uint32 index) {
     if (index >= list->_length) return NULL;
 
     return list->_data + index * list->_sizeOfElement;
 }
 
-void LC_ListDestroy(LC_List *list) {
+void LC_List_Destroy(LC_List *list) {
     list->_sizeOfElement = 0;
     list->_actualBufferSize = 0;
     list->_length = 0;
@@ -392,7 +392,7 @@ void LC_MergeIntegers(int32 *array, const int32 low, const int32 mid, const int3
 // ===================================================================================================================
 void LC_GetCurrentWorkingDirectory(LC_Arena *arena, char **currentDirectory) {
     constexpr size_t size = 128;
-    *currentDirectory = LC_AllocateArena(arena, size);
+    *currentDirectory = LC_Arena_Allocate(arena, size);
     if (*currentDirectory == NULL) {
         *currentDirectory = "Could not allocate memory!";
         return;

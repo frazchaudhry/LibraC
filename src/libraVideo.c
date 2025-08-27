@@ -2,7 +2,6 @@
 // Created by Fraz Mahmud on 5/14/2025.
 //
 
-#include "glad/glad.h"
 #include <libraVideo.h>
 
 #define STB_TRUETYPE_IMPLEMENTATION
@@ -64,9 +63,9 @@ void LC_GL_SetUniformMat4(const GLuint programId, const char *name, const mat4 *
     glUniformMatrix4fv(glGetUniformLocation(programId, name), 1, GL_FALSE, mat[0][0]);
 }
 
-bool LC_GL_InitializeShader(LC_Arena *arena, LC_GL_Shader *shader, const char *vertexShaderPath,
+bool LC_GL_InitializeShader(LC_Arena *arena, GLuint *shaderProgramId, const char *vertexShaderPath,
                             const char *fragmentShaderPath, char *buffer) {
-    TemporaryArenaMemory localArena = LC_BeginTemporaryArenaMemory(arena);
+    TemporaryArenaMemory localArena = LC_Arena_BeginTemporaryMemory(arena);
 
     char *vertexShaderSource = nullptr;
     char *fragmentShaderSource = nullptr;
@@ -96,16 +95,16 @@ bool LC_GL_InitializeShader(LC_Arena *arena, LC_GL_Shader *shader, const char *v
     if (!CheckCompileErrors(fragmentShader, "FRAGMENT", buffer)) return false;
 
     // Shader Program
-    shader->programId = glCreateProgram();
-    glAttachShader(shader->programId, vertexShader);
-    glAttachShader(shader->programId, fragmentShader);
-    glLinkProgram(shader->programId);
-    if (!CheckCompileErrors(shader->programId, "PROGRAM", buffer)) return false;
+    *shaderProgramId = glCreateProgram();
+    glAttachShader(*shaderProgramId, vertexShader);
+    glAttachShader(*shaderProgramId, fragmentShader);
+    glLinkProgram(*shaderProgramId);
+    if (!CheckCompileErrors(*shaderProgramId, "PROGRAM", buffer)) return false;
 
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
-    LC_EndTemporaryArena(localArena);
+    LC_Arena_EndTemporary(localArena);
 
     return true;
 }
@@ -141,15 +140,15 @@ bool LC_GL_InitializeTextRenderer(LC_Arena *arena, LC_GL_Renderer *renderer, con
     constexpr size_t STARTING_ARENA_SIZE = 300 * 1024;
     void *localArenaBuffer = malloc(STARTING_ARENA_SIZE);
     LC_Arena localArena;
-    LC_InitializeArena(&localArena, localArenaBuffer, STARTING_ARENA_SIZE);
+    LC_Arena_Initialize(&localArena, localArenaBuffer, STARTING_ARENA_SIZE);
 
-    LC_GL_Shader shader;
-    if (!LC_GL_InitializeShader(&localArena, &shader, vertexShaderPath, fragmentShaderPath, errorLog)) {
+    GLuint shaderProgramId;
+    if (!LC_GL_InitializeShader(&localArena, &shaderProgramId, vertexShaderPath, fragmentShaderPath, errorLog)) {
         SDL_Log("%s", errorLog);
         return false;
     }
     LC_GL_GameText *gameText = renderer->gameText;
-    gameText->fontShaderProgramId = shader.programId;
+    gameText->fontShaderProgramId = shaderProgramId;
 
     size_t fontFileSize;
     uchar *fontBuffer;
@@ -164,7 +163,7 @@ bool LC_GL_InitializeTextRenderer(LC_Arena *arena, LC_GL_Renderer *renderer, con
     constexpr uint32 fontAtlasWidth = 512;
     constexpr uint32 fontAtlasHeight = 512;
 
-    uchar *fontAtlasBitmap = LC_AllocateArena(&localArena, fontAtlasWidth * fontAtlasHeight * sizeof(uchar));
+    uchar *fontAtlasBitmap = LC_Arena_Allocate(&localArena, fontAtlasWidth * fontAtlasHeight * sizeof(uchar));
     constexpr uint32 codePointOfFirstCharacter = 32;
     constexpr uint32 charsToIncludeInFontAtlas = 95;
 
@@ -172,8 +171,8 @@ bool LC_GL_InitializeTextRenderer(LC_Arena *arena, LC_GL_Renderer *renderer, con
     gameText->codePointOfFirstCharacter = codePointOfFirstCharacter;
     gameText->charsToIncludeInFontAtlas = charsToIncludeInFontAtlas;
 
-    gameText->packedChars = LC_AllocateArena(arena, sizeof(stbtt_packedchar) * charsToIncludeInFontAtlas);
-    gameText->alignedQuads = LC_AllocateArena(arena, sizeof(stbtt_aligned_quad) * charsToIncludeInFontAtlas);
+    gameText->packedChars = LC_Arena_Allocate(arena, sizeof(stbtt_packedchar) * charsToIncludeInFontAtlas);
+    gameText->alignedQuads = LC_Arena_Allocate(arena, sizeof(stbtt_aligned_quad) * charsToIncludeInFontAtlas);
 
     stbtt_pack_context context;
 
@@ -191,7 +190,7 @@ bool LC_GL_InitializeTextRenderer(LC_Arena *arena, LC_GL_Renderer *renderer, con
     LC_GL_IsDSAAvailable(renderer) ? LC_GL_CreateTextureTextDSA(gameText, fontAtlasWidth, fontAtlasHeight, fontAtlasBitmap) :
         LC_GL_CreateTextureTextNonDSA(gameText, fontAtlasWidth, fontAtlasHeight, fontAtlasBitmap);
 
-    LC_FreeAllArena(&localArena);
+    LC_Arena_FreeAll(&localArena);
     free(localArenaBuffer);
     return true;
 }
@@ -287,7 +286,7 @@ void LC_GL_SetupVaoAndVboTextNonDSA(LC_GL_GameText *gameText) {
 }
 
 void LC_GL_RenderText(LC_GL_Renderer *renderer, const LC_GL_Text *text) {
-    uint64 totalCharacters = LC_GetStringLengthSkipSpaces(&text->string);
+    uint64 totalCharacters = LC_String_GetLengthSkipSpaces(&text->string);
 
     // Each quad has 4 vertices
     const uint32 MAX_QUADS = totalCharacters;
@@ -452,14 +451,14 @@ void LC_GL_DeleteTextRenderer(const LC_GL_GameText *gameText) {
 
 // =============================================Video Core============================================================
 
-void LC_InitializeColor(const float red, const float green, const float blue, const float alpha, LC_Color *color) {
+void LC_Color_Initialize(const float red, const float green, const float blue, const float alpha, LC_Color *color) {
     color->r = red;
     color->g = green;
     color->b = blue;
     color->a = alpha;
 }
 
-LC_Color LC_CreateColor(const float red, const float green, const float blue, const float alpha) {
+LC_Color LC_Color_Create(const float red, const float green, const float blue, const float alpha) {
     const LC_Color color = {
         .r = red,
         .g = green,
@@ -572,11 +571,11 @@ void LC_SetupViewProjectionMatrix2D(const int32 screenWidth, const int32 screenH
 
 void LC_GL_SetupDefaultRectRenderer(LC_Arena *arena, LC_GL_Renderer *renderer, const char *vertexShaderPath, 
                               const char *fragmentShaderPath, char *errorLog) {
-    LC_GL_Shader shader;
-    if (!LC_GL_InitializeShader(arena, &shader, vertexShaderPath, fragmentShaderPath, errorLog)) {
+    GLuint shaderProgramId;
+    if (!LC_GL_InitializeShader(arena, &shaderProgramId, vertexShaderPath, fragmentShaderPath, errorLog)) {
         SDL_Log("%s", errorLog);
     }
-    renderer->defaultShaderProgramId = shader.programId;
+    renderer->defaultShaderProgramId = shaderProgramId;
 
     // Setup VAO, VBO, EBO
     constexpr GLuint sizeOfBuffer = sizeof(float) * 4 * 7; // Size of float * number of vertices * stride(3 pos, 4 color)
@@ -586,16 +585,43 @@ void LC_GL_SetupDefaultRectRenderer(LC_Arena *arena, LC_GL_Renderer *renderer, c
         1, 2, 3
     };
 
-    LC_GL_IsDSAAvailable(renderer) ? LC_GL_DefaultRectVAODSA(renderer, indices, sizeOfBuffer) :
-        LC_GL_DefaultRectVAONonDSA(renderer, indices, sizeOfBuffer);
-}
+    if (!LC_GL_IsDSAAvailable(renderer)) {
+        // Create the Vertex Buffer Object to store the vertex data
+        glGenVertexArrays(1, &renderer->defaultVertexArrayObject);
+        glGenBuffers(1, &renderer->defaultVertexBufferObject);
+        glGenBuffers(1, &renderer->defaultElementBufferObject);
+        // 1. Bind Vertex Array Object first before binding and configuring Vertex Buffer Object
+        glBindVertexArray(renderer->defaultVertexArrayObject);
 
-void LC_GL_DefaultRectVAODSA(LC_GL_Renderer *renderer, const uint32 *indices, const GLuint sizeOfBuffer) {
+        // We bind the buffer object using the buffer type for the Vertex Buffer Object
+        glBindBuffer(GL_ARRAY_BUFFER, renderer->defaultVertexBufferObject);
+
+        // Copy the vertex data into the buffer's memory
+        // With GL_STREAM_DRAW the data is set only once and used by the GPU at most a few times.
+        // With GL_STATIC_DRAW the data is set only once and used many times
+        // With GL_DYNAMIC_DRAW the data is changed a lot and used many times.
+        glBufferData(GL_ARRAY_BUFFER, sizeOfBuffer, nullptr, GL_DYNAMIC_DRAW);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer->defaultElementBufferObject);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float), nullptr);
+        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void *)(3 * sizeof(float)));
+        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+        glBindVertexArray(0);
+
+        return;
+    }
+
     glCreateBuffers(1, &renderer->defaultVertexBufferObject);
     glNamedBufferStorage(renderer->defaultVertexBufferObject, sizeOfBuffer, nullptr, GL_DYNAMIC_STORAGE_BIT);
 
     glCreateBuffers(1, &renderer->defaultElementBufferObject);
-    glNamedBufferStorage(renderer->defaultElementBufferObject, 6 * sizeof(uint32), indices, GL_DYNAMIC_STORAGE_BIT);
+    glNamedBufferStorage(renderer->defaultElementBufferObject, sizeof(indices), indices, GL_DYNAMIC_STORAGE_BIT);
 
     glCreateVertexArrays(1, &renderer->defaultVertexArrayObject);
     constexpr GLuint vaoBindingPoint = 0;
@@ -616,36 +642,6 @@ void LC_GL_DefaultRectVAODSA(LC_GL_Renderer *renderer, const uint32 *indices, co
     glVertexArrayAttribBinding(renderer->defaultVertexArrayObject, colorIndex, vaoBindingPoint);
 }
 
-void LC_GL_DefaultRectVAONonDSA(LC_GL_Renderer *renderer, const uint32 *indices, GLuint sizeOfBuffer) {
-    // Create the Vertex Buffer Object to store the vertex data
-    glGenVertexArrays(1, &renderer->defaultVertexArrayObject);
-    glGenBuffers(1, &renderer->defaultVertexBufferObject);
-    glGenBuffers(1, &renderer->defaultElementBufferObject);
-    // 1. Bind Vertex Array Object first before binding and configuring Vertex Buffer Object
-    glBindVertexArray(renderer->defaultVertexArrayObject);
-
-    // We bind the buffer object using the buffer type for the Vertex Buffer Object
-    glBindBuffer(GL_ARRAY_BUFFER, renderer->defaultVertexBufferObject);
-
-    // Copy the vertex data into the buffer's memory
-    // With GL_STREAM_DRAW the data is set only once and used by the GPU at most a few times.
-    // With GL_STATIC_DRAW the data is set only once and used many times
-    // With GL_DYNAMIC_DRAW the data is changed a lot and used many times.
-    glBufferData(GL_ARRAY_BUFFER, sizeOfBuffer, nullptr, GL_DYNAMIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer->defaultElementBufferObject);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(uint32), indices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float), nullptr);
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void *)(3 * sizeof(float)));
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    glBindVertexArray(0);
-}
-
 void LC_GL_ClearBackground(const LC_Color color) {
     glClearColor(color.r/255.0f, color.b/255.0f, color.g/255.0f, color.a);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -660,39 +656,34 @@ void LC_GL_RenderRectangle(LC_GL_Renderer *renderer, const LC_Rect *rect, const 
         (float)rect->x, (float)rect->y, 0.0f, (float)color->r, color->g, color->b, color->a, // Top Left
     };
 
-    LC_GL_IsDSAAvailable(renderer) ? LC_GL_RenderRectDSA(renderer, vertices, sizeof(vertices)) :
-        LC_GL_RenderRectNonDSA(renderer, vertices, sizeof(vertices));
-}
+    if (!LC_GL_IsDSAAvailable(renderer)) {
+        // Setup Before Render
+        glUseProgram(renderer->defaultShaderProgramId);
+        LC_GL_SetUniformMat4(renderer->defaultShaderProgramId, "viewProjectionMatrix",
+                             &renderer->viewProjectionMatrix);
+        glBindVertexArray(renderer->defaultVertexArrayObject);
+        glBindBuffer(GL_ARRAY_BUFFER, renderer->defaultVertexBufferObject);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
 
-void LC_GL_RenderRectDSA(LC_GL_Renderer *renderer, const float *buffer, uint32 sizeOfBuffer) {
+        // Render
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+
+        // Unbind VAO and VBO
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindVertexArray(0);
+        return;
+    }
     // Setup Before Render
     glUseProgram(renderer->defaultShaderProgramId);
     LC_GL_SetUniformMat4(renderer->defaultShaderProgramId, "viewProjectionMatrix",
                          &renderer->viewProjectionMatrix);
     glBindVertexArray(renderer->defaultVertexArrayObject);
-    glNamedBufferSubData(renderer->defaultVertexBufferObject, 0, sizeOfBuffer, buffer);
+    glNamedBufferSubData(renderer->defaultVertexBufferObject, 0, sizeof(vertices), vertices);
 
     // Render
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
     // Unbind VAO
-    glBindVertexArray(0);
-}
-
-void LC_GL_RenderRectNonDSA(LC_GL_Renderer *renderer, const float *buffer, uint32 sizeOfBuffer) {
-    // Setup Before Render
-    glUseProgram(renderer->defaultShaderProgramId);
-    LC_GL_SetUniformMat4(renderer->defaultShaderProgramId, "viewProjectionMatrix",
-                         &renderer->viewProjectionMatrix);
-    glBindVertexArray(renderer->defaultVertexArrayObject);
-    glBindBuffer(GL_ARRAY_BUFFER, renderer->defaultVertexBufferObject);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeOfBuffer, buffer);
-
-    // Render
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-
-    // Unbind VAO and VBO
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 }
 

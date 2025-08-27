@@ -8,14 +8,10 @@
 #include <stb_truetype.h>
 
 #include <libraC.h>
+#include "glad/glad.h"
 #include "libraCore.h"
 
 // =============================================STRUCTS==============================================================
-// SHADER
-typedef struct shader {
-    GLuint programId;
-} LC_GL_Shader;
-
 // TEXT RENDERING
 typedef struct text {
     LC_String string;
@@ -70,7 +66,7 @@ typedef struct renderer_gl {
 
 // =============================================SHADER===============================================================
 
-bool LC_GL_InitializeShader(LC_Arena *arena, LC_GL_Shader *shader, const char *vertexShaderPath,
+bool LC_GL_InitializeShader(LC_Arena *arena, GLuint *shaderProgramId, const char *vertexShaderPath,
                             const char *fragmentShaderPath,
                             char *buffer);
 
@@ -112,8 +108,8 @@ void LC_GL_InsertTextBytesIntoBuffer(float *buffer, const LC_GL_GameText *gameTe
 
 // =============================================Video Core============================================================
 
-void LC_InitializeColor(float red, float green, float blue, float alpha, LC_Color *color);
-LC_Color LC_CreateColor(float red, float green, float blue, float alpha);
+void LC_Color_Initialize(float red, float green, float blue, float alpha, LC_Color *color);
+LC_Color LC_Color_Create(float red, float green, float blue, float alpha);
 
 int32 LC_GL_InitializeVideo(LC_Arena *arena, LC_GL_Renderer *renderer, const char *title, 
                             const char *fontName, char *errorLog);
@@ -123,12 +119,8 @@ bool LC_GL_IsDSAAvailable(LC_GL_Renderer *renderer);
 void LC_SetupViewProjectionMatrix2D(int32 screenWidth, int32 screenHeight, mat4 viewProjectionMatrix);
 void LC_GL_SetupDefaultRectRenderer(LC_Arena *arena, LC_GL_Renderer *renderer, const char *vertexShaderPath, 
                               const char *fragmentShaderPath, char *errorLog);
-void LC_GL_DefaultRectVAODSA(LC_GL_Renderer *renderer, const uint32 *indices,  GLuint sizeOfBuffer);
-void LC_GL_DefaultRectVAONonDSA(LC_GL_Renderer *renderer, const uint32 *indices, GLuint sizeOfBuffer);
 void LC_GL_ClearBackground(LC_Color color);
 void LC_GL_RenderRectangle(LC_GL_Renderer *renderer, const LC_Rect *rect, const LC_Color *color);
-void LC_GL_RenderRectDSA(LC_GL_Renderer *renderer, const float *buffer, uint32 sizeOfBuffer);
-void LC_GL_RenderRectNonDSA(LC_GL_Renderer *renderer, const float *buffer, uint32 sizeOfBuffer);
 bool LC_GL_SwapBuffer(SDL_Window *window, char *errorLog);
 void LC_GL_FreeResources(const LC_GL_Renderer *renderer);
 
