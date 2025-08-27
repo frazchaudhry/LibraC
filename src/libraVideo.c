@@ -450,7 +450,7 @@ void LC_GL_DeleteTextRenderer(const LC_GL_GameText *gameText) {
 
 // ==================================================================================================================
 
-// =============================================Game Core============================================================
+// =============================================Video Core============================================================
 
 void LC_InitializeColor(const float red, const float green, const float blue, const float alpha, LC_Color *color) {
     color->r = red;
@@ -517,7 +517,7 @@ int32 LC_GL_InitializeVideo(LC_Arena *arena, LC_GL_Renderer *renderer, const cha
 
     glViewport(0, 0, renderer->screenWidth, renderer->screenHeight);
 
-    LC_GL_SetupViewProjectionMatrix2D(renderer->screenWidth, renderer->screenHeight, renderer->viewProjectionMatrix);
+    LC_SetupViewProjectionMatrix2D(renderer->screenWidth, renderer->screenHeight, renderer->viewProjectionMatrix);
 
     const char *defaultVertexShader = LC_GL_IsDSAAvailable(renderer) ? "shaders/default.vert" : "shaders/default330.vert";
     const char *defaultFragShader = LC_GL_IsDSAAvailable(renderer) ? "shaders/default.frag" : "shaders/default330.frag";
@@ -552,7 +552,7 @@ bool LC_GL_IsDSAAvailable(LC_GL_Renderer *renderer) {
     return true;
 }
 
-void LC_GL_SetupViewProjectionMatrix2D(const int32 screenWidth, const int32 screenHeight, mat4 viewProjectionMatrix) {
+void LC_SetupViewProjectionMatrix2D(const int32 screenWidth, const int32 screenHeight, mat4 viewProjectionMatrix) {
     mat4 projection;
     glm_ortho(0.0f, (float)screenWidth, (float)screenHeight, 0.0f, -1.0f, 1.0f, projection);
     mat4 view = GLM_MAT4_IDENTITY_INIT;
@@ -598,7 +598,7 @@ void LC_GL_DefaultRectVAODSA(LC_GL_Renderer *renderer, const uint32 *indices, co
     glNamedBufferStorage(renderer->defaultElementBufferObject, 6 * sizeof(uint32), indices, GL_DYNAMIC_STORAGE_BIT);
 
     glCreateVertexArrays(1, &renderer->defaultVertexArrayObject);
-    const GLuint vaoBindingPoint = 0;
+    constexpr GLuint vaoBindingPoint = 0;
     glVertexArrayVertexBuffer(renderer->defaultVertexArrayObject, vaoBindingPoint, 
                               renderer->defaultVertexBufferObject, 0, 7 * sizeof(float));
     glVertexArrayElementBuffer(renderer->defaultVertexArrayObject, renderer->defaultElementBufferObject);
@@ -713,5 +713,9 @@ void LC_GL_FreeResources(const LC_GL_Renderer *renderer) {
 
     SDL_QuitSubSystem(SDL_INIT_VIDEO);
 }
+
+// ==================================================================================================================
+
+// =============================================Video Errors=========================================================
 
 // ==================================================================================================================

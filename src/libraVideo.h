@@ -66,6 +66,8 @@ typedef struct renderer_gl {
     GLint glMinorVersion;
 } LC_GL_Renderer;
 
+// ==================================================================================================================
+
 // =============================================SHADER===============================================================
 
 bool LC_GL_InitializeShader(LC_Arena *arena, LC_GL_Shader *shader, const char *vertexShaderPath,
@@ -108,7 +110,7 @@ void LC_GL_InsertTextBytesIntoBuffer(float *buffer, const LC_GL_GameText *gameTe
 
 // ==================================================================================================================
 
-// =============================================Game Core============================================================
+// =============================================Video Core============================================================
 
 void LC_InitializeColor(float red, float green, float blue, float alpha, LC_Color *color);
 LC_Color LC_CreateColor(float red, float green, float blue, float alpha);
@@ -118,7 +120,7 @@ int32 LC_GL_InitializeVideo(LC_Arena *arena, LC_GL_Renderer *renderer, const cha
 void LC_GL_FramebufferSizeCallback(int32 width, int32 height);
 void LC_GL_GetOpenGLVersionInfo();
 bool LC_GL_IsDSAAvailable(LC_GL_Renderer *renderer);
-void LC_GL_SetupViewProjectionMatrix2D(int32 screenWidth, int32 screenHeight, mat4 viewProjectionMatrix);
+void LC_SetupViewProjectionMatrix2D(int32 screenWidth, int32 screenHeight, mat4 viewProjectionMatrix);
 void LC_GL_SetupDefaultRectRenderer(LC_Arena *arena, LC_GL_Renderer *renderer, const char *vertexShaderPath, 
                               const char *fragmentShaderPath, char *errorLog);
 void LC_GL_DefaultRectVAODSA(LC_GL_Renderer *renderer, const uint32 *indices,  GLuint sizeOfBuffer);
@@ -132,4 +134,7 @@ void LC_GL_FreeResources(const LC_GL_Renderer *renderer);
 
 // ==================================================================================================================
 
+// =============================================Video Errors==========================================================
+
+// ==================================================================================================================
 #endif //LIBRAVIDEO_H
