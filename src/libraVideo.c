@@ -2,6 +2,7 @@
 // Created by Fraz Mahmud on 5/14/2025.
 //
 
+#include "libraCore.h"
 #include <libraVideo.h>
 
 #define STB_TRUETYPE_IMPLEMENTATION
@@ -63,14 +64,13 @@ void LC_GL_SetUniformMat4(const GLuint programId, const char *name, const mat4 *
     glUniformMatrix4fv(glGetUniformLocation(programId, name), 1, GL_FALSE, mat[0][0]);
 }
 
-bool LC_GL_InitializeShader(LC_Arena *arena, GLuint *shaderProgramId, const char *vertexShaderPath,
-                            const char *fragmentShaderPath, char *buffer) {
+bool LC_GL_InitializeShader(LC_Arena *arena, LC_GL_Shader *shader, char *buffer) {
     TemporaryArenaMemory localArena = LC_Arena_BeginTemporaryMemory(arena);
 
     char *vertexShaderSource = nullptr;
     char *fragmentShaderSource = nullptr;
-    LC_GetFileContentString(localArena.arena, vertexShaderPath, &vertexShaderSource);
-    LC_GetFileContentString(localArena.arena, fragmentShaderPath, &fragmentShaderSource);
+    LC_GetFileContentString(localArena.arena, shader->vertexShaderPath->data, &vertexShaderSource);
+    LC_GetFileContentString(localArena.arena, shader->fragmentShaderPath->data, &fragmentShaderSource);
 
     if (!vertexShaderSource) {
         snprintf(buffer, 1024, "ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ: vertex-shader");
@@ -95,11 +95,11 @@ bool LC_GL_InitializeShader(LC_Arena *arena, GLuint *shaderProgramId, const char
     if (!CheckCompileErrors(fragmentShader, "FRAGMENT", buffer)) return false;
 
     // Shader Program
-    *shaderProgramId = glCreateProgram();
-    glAttachShader(*shaderProgramId, vertexShader);
-    glAttachShader(*shaderProgramId, fragmentShader);
-    glLinkProgram(*shaderProgramId);
-    if (!CheckCompileErrors(*shaderProgramId, "PROGRAM", buffer)) return false;
+    shader->programId = glCreateProgram();
+    glAttachShader(shader->programId, vertexShader);
+    glAttachShader(shader->programId, fragmentShader);
+    glLinkProgram(shader->programId);
+    if (!CheckCompileErrors(shader->programId, "PROGRAM", buffer)) return false;
 
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
@@ -136,19 +136,17 @@ bool CheckCompileErrors(const GLuint programId, char *type, char *buffer) {
 // =============================================Text Rendering=======================================================
 
 bool LC_GL_InitializeTextRenderer(LC_Arena *arena, LC_GL_Renderer *renderer, const char *fontName, const float fontSize,
-                                  const char *vertexShaderPath, const char *fragmentShaderPath, char *errorLog) {
+                                  char *errorLog) {
     constexpr size_t STARTING_ARENA_SIZE = 300 * 1024;
     void *localArenaBuffer = malloc(STARTING_ARENA_SIZE);
     LC_Arena localArena;
     LC_Arena_Initialize(&localArena, localArenaBuffer, STARTING_ARENA_SIZE);
 
-    GLuint shaderProgramId;
-    if (!LC_GL_InitializeShader(&localArena, &shaderProgramId, vertexShaderPath, fragmentShaderPath, errorLog)) {
+    if (!LC_GL_InitializeShader(&localArena, renderer->gameText->fontShader, errorLog)) {
         SDL_Log("%s", errorLog);
         return false;
     }
     LC_GL_GameText *gameText = renderer->gameText;
-    gameText->fontShaderProgramId = shaderProgramId;
 
     size_t fontFileSize;
     uchar *fontBuffer;
@@ -287,6 +285,7 @@ void LC_GL_SetupVaoAndVboTextNonDSA(LC_GL_GameText *gameText) {
 
 void LC_GL_RenderText(LC_GL_Renderer *renderer, const LC_GL_Text *text) {
     uint64 totalCharacters = LC_String_GetLengthSkipSpaces(&text->string);
+    GLuint fontShaderProgramId = renderer->gameText->fontShader->programId;
 
     // Each quad has 4 vertices
     const uint32 MAX_QUADS = totalCharacters;
@@ -302,7 +301,7 @@ void LC_GL_RenderText(LC_GL_Renderer *renderer, const LC_GL_Text *text) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    glUseProgram(renderer->gameText->fontShaderProgramId);
+    glUseProgram(fontShaderProgramId);
 
     LC_GL_IsDSAAvailable(renderer) ? LC_GL_RenderTextDSA(renderer, totalVertices, sizeOfBuffer, buffer) :
         LC_GL_RenderTextNonDSA(renderer, totalVertices, sizeOfBuffer, buffer);
@@ -314,8 +313,10 @@ void LC_GL_RenderText(LC_GL_Renderer *renderer, const LC_GL_Text *text) {
 }
 
 void LC_GL_RenderTextDSA(LC_GL_Renderer *renderer, GLint totalVertices, GLuint sizeOfBuffer, const float *buffer) {
-    LC_GL_SetUniformInt(renderer->gameText->fontShaderProgramId, "fontAtlasTexture", 0);
-    LC_GL_SetUniformMat4(renderer->gameText->fontShaderProgramId, "viewProjectionMatrix",
+    GLuint fontShaderProgramId = renderer->gameText->fontShader->programId;
+
+    LC_GL_SetUniformInt(fontShaderProgramId, "fontAtlasTexture", 0);
+    LC_GL_SetUniformMat4(fontShaderProgramId, "viewProjectionMatrix",
                          &renderer->viewProjectionMatrix);
 
     // Bind the Texture Unit
@@ -334,12 +335,14 @@ void LC_GL_RenderTextDSA(LC_GL_Renderer *renderer, GLint totalVertices, GLuint s
 }
 
 void LC_GL_RenderTextNonDSA(LC_GL_Renderer *renderer, GLint totalVertices, GLuint sizeOfBuffer, const float *buffer) {
+    GLuint fontShaderProgramId = renderer->gameText->fontShader->programId;
+
     // Bind the Texture
     glBindTexture(GL_TEXTURE_2D, renderer->gameText->fontAtlasTextureId);
     glActiveTexture(GL_TEXTURE0);
 
-    LC_GL_SetUniformInt(renderer->gameText->fontShaderProgramId, "fontAtlasTexture", 0);
-    LC_GL_SetUniformMat4(renderer->gameText->fontShaderProgramId, "viewProjectionMatrix",
+    LC_GL_SetUniformInt(fontShaderProgramId, "fontAtlasTexture", 0);
+    LC_GL_SetUniformMat4(fontShaderProgramId, "viewProjectionMatrix",
                          &renderer->viewProjectionMatrix);
     // Render here
     glBindVertexArray(renderer->gameText->vao);
@@ -444,7 +447,7 @@ void LC_GL_DeleteTextRenderer(const LC_GL_GameText *gameText) {
     glDeleteBuffers(1, &gameText->vao);
     glDeleteBuffers(1, &gameText->vbo);
     glDeleteTextures(1, &gameText->fontAtlasTextureId);
-    glDeleteProgram(gameText->fontShaderProgramId);
+    glDeleteProgram(gameText->fontShader->programId);
 }
 
 // ==================================================================================================================
@@ -466,6 +469,18 @@ LC_Color LC_Color_Create(const float red, const float green, const float blue, c
         .a = alpha
     };
     return color;
+}
+
+void LC_GL_InitializeRenderer(LC_Arena *arena, LC_GL_Renderer *renderer, int32 width, int32 height) {
+    renderer->gameText = LC_Arena_Allocate(arena, sizeof(LC_GL_GameText));
+    renderer->screenWidth = width;
+    renderer->screenHeight = height;
+    renderer->defaultShader = LC_Arena_Allocate(arena, sizeof(LC_GL_Shader));
+    renderer->defaultShader->vertexShaderPath = LC_Arena_Allocate(arena, sizeof(LC_String));
+    renderer->defaultShader->fragmentShaderPath = LC_Arena_Allocate(arena, sizeof(LC_String));
+    renderer->gameText->fontShader = LC_Arena_Allocate(arena, sizeof(LC_GL_Shader));
+    renderer->gameText->fontShader->vertexShaderPath = LC_Arena_Allocate(arena, sizeof(LC_String));
+    renderer->gameText->fontShader->fragmentShaderPath = LC_Arena_Allocate(arena, sizeof(LC_String));
 }
 
 int32 LC_GL_InitializeVideo(LC_Arena *arena, LC_GL_Renderer *renderer, const char *title, const char *fontName,
@@ -518,13 +533,21 @@ int32 LC_GL_InitializeVideo(LC_Arena *arena, LC_GL_Renderer *renderer, const cha
 
     LC_SetupViewProjectionMatrix2D(renderer->screenWidth, renderer->screenHeight, renderer->viewProjectionMatrix);
 
-    const char *defaultVertexShader = LC_GL_IsDSAAvailable(renderer) ? "shaders/default.vert" : "shaders/default330.vert";
-    const char *defaultFragShader = LC_GL_IsDSAAvailable(renderer) ? "shaders/default.frag" : "shaders/default330.frag";
-    LC_GL_SetupDefaultRectRenderer(arena, renderer, defaultVertexShader, defaultFragShader, errorLog);
+    LC_GL_IsDSAAvailable(renderer) ? 
+        LC_String_InitializeByCopy(arena, renderer->defaultShader->vertexShaderPath, "shaders/default.vert") : 
+        LC_String_InitializeByCopy(arena, renderer->defaultShader->vertexShaderPath, "shaders/default330.vert");
+    LC_GL_IsDSAAvailable(renderer) ? 
+        LC_String_InitializeByCopy(arena, renderer->defaultShader->fragmentShaderPath, "shaders/default.frag") : 
+        LC_String_InitializeByCopy(arena, renderer->defaultShader->fragmentShaderPath, "shaders/default330.frag");
+    LC_GL_SetupDefaultRectRenderer(arena, renderer, errorLog);
 
-    const char *textVertexShader = LC_GL_IsDSAAvailable(renderer) ? "shaders/text.vert" : "shaders/text330.vert";
-    const char *textFragShader = LC_GL_IsDSAAvailable(renderer) ? "shaders/text.frag" : "shaders/text330.frag";
-    LC_GL_InitializeTextRenderer(arena, renderer, fontName, 48.0f, textVertexShader, textFragShader, errorLog);
+    LC_GL_IsDSAAvailable(renderer) ?
+        LC_String_InitializeByCopy(arena, renderer->gameText->fontShader->vertexShaderPath, "shaders/text.vert") : 
+        LC_String_InitializeByCopy(arena, renderer->gameText->fontShader->vertexShaderPath, "shaders/text330.vert");
+    LC_GL_IsDSAAvailable(renderer) ? 
+        LC_String_InitializeByCopy(arena, renderer->gameText->fontShader->fragmentShaderPath, "shaders/text.frag") : 
+        LC_String_InitializeByCopy(arena, renderer->gameText->fontShader->fragmentShaderPath, "shaders/text330.frag");
+    LC_GL_InitializeTextRenderer(arena, renderer, fontName, 48.0f, errorLog);
 
     LC_GL_IsDSAAvailable(renderer) ? LC_GL_SetupVaoAndVboTextDSA(renderer->gameText) :
         LC_GL_SetupVaoAndVboTextNonDSA(renderer->gameText);
@@ -569,13 +592,10 @@ void LC_SetupViewProjectionMatrix2D(const int32 screenWidth, const int32 screenH
     glm_mat4_mul(projection, view, viewProjectionMatrix);
 }
 
-void LC_GL_SetupDefaultRectRenderer(LC_Arena *arena, LC_GL_Renderer *renderer, const char *vertexShaderPath, 
-                              const char *fragmentShaderPath, char *errorLog) {
-    GLuint shaderProgramId;
-    if (!LC_GL_InitializeShader(arena, &shaderProgramId, vertexShaderPath, fragmentShaderPath, errorLog)) {
+void LC_GL_SetupDefaultRectRenderer(LC_Arena *arena, LC_GL_Renderer *renderer, char *errorLog) {
+    if (!LC_GL_InitializeShader(arena, renderer->defaultShader, errorLog)) {
         SDL_Log("%s", errorLog);
     }
-    renderer->defaultShaderProgramId = shaderProgramId;
 
     // Setup VAO, VBO, EBO
     constexpr GLuint sizeOfBuffer = sizeof(float) * 4 * 7; // Size of float * number of vertices * stride(3 pos, 4 color)
@@ -656,10 +676,11 @@ void LC_GL_RenderRectangle(LC_GL_Renderer *renderer, const LC_Rect *rect, const 
         (float)rect->x, (float)rect->y, 0.0f, (float)color->r, color->g, color->b, color->a, // Top Left
     };
 
+    GLuint defaultShaderProgramId = renderer->defaultShader->programId;
     if (!LC_GL_IsDSAAvailable(renderer)) {
         // Setup Before Render
-        glUseProgram(renderer->defaultShaderProgramId);
-        LC_GL_SetUniformMat4(renderer->defaultShaderProgramId, "viewProjectionMatrix",
+        glUseProgram(defaultShaderProgramId);
+        LC_GL_SetUniformMat4(defaultShaderProgramId, "viewProjectionMatrix",
                              &renderer->viewProjectionMatrix);
         glBindVertexArray(renderer->defaultVertexArrayObject);
         glBindBuffer(GL_ARRAY_BUFFER, renderer->defaultVertexBufferObject);
@@ -674,8 +695,8 @@ void LC_GL_RenderRectangle(LC_GL_Renderer *renderer, const LC_Rect *rect, const 
         return;
     }
     // Setup Before Render
-    glUseProgram(renderer->defaultShaderProgramId);
-    LC_GL_SetUniformMat4(renderer->defaultShaderProgramId, "viewProjectionMatrix",
+    glUseProgram(defaultShaderProgramId);
+    LC_GL_SetUniformMat4(defaultShaderProgramId, "viewProjectionMatrix",
                          &renderer->viewProjectionMatrix);
     glBindVertexArray(renderer->defaultVertexArrayObject);
     glNamedBufferSubData(renderer->defaultVertexBufferObject, 0, sizeof(vertices), vertices);

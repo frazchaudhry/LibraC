@@ -8,10 +8,17 @@
 #include <stb_truetype.h>
 
 #include <libraC.h>
-#include "glad/glad.h"
 #include "libraCore.h"
 
 // =============================================STRUCTS==============================================================
+
+// SHADER
+typedef struct shader_gl {
+    GLuint programId;
+    LC_String *vertexShaderPath;
+    LC_String *fragmentShaderPath;
+} LC_GL_Shader;
+
 // TEXT RENDERING
 typedef struct text {
     LC_String string;
@@ -24,7 +31,7 @@ typedef struct gameText {
     GLuint vao;
     GLuint vbo;
     GLuint fontAtlasTextureId;
-    GLuint fontShaderProgramId;
+    LC_GL_Shader *fontShader;
     char *fontName;
     float fontSize;
     char codePointOfFirstCharacter;
@@ -53,7 +60,7 @@ typedef struct renderer_gl {
     int32 screenHeight;
     SDL_Window *window;
     mat4 viewProjectionMatrix;
-    GLuint defaultShaderProgramId;
+    LC_GL_Shader *defaultShader;
     GLuint defaultVertexArrayObject;
     GLuint defaultVertexBufferObject;
     GLuint defaultElementBufferObject;
@@ -66,9 +73,7 @@ typedef struct renderer_gl {
 
 // =============================================SHADER===============================================================
 
-bool LC_GL_InitializeShader(LC_Arena *arena, GLuint *shaderProgramId, const char *vertexShaderPath,
-                            const char *fragmentShaderPath,
-                            char *buffer);
+bool LC_GL_InitializeShader(LC_Arena *arena, LC_GL_Shader *shader, char *buffer);
 
 void LC_GL_SetUniformBool(GLuint programId, const char *name, bool value);
 void LC_GL_SetUniformInt(GLuint programId, const char *name, int32 value);
@@ -91,11 +96,11 @@ bool CheckCompileErrors(GLuint programId, char *type, char *buffer);
 // =============================================Text Rendering=======================================================
 
 bool LC_GL_InitializeTextRenderer(LC_Arena *arena, LC_GL_Renderer *renderer, const char *fontName, float fontSize,
-                                  const char *vertexShaderPath, const char *fragmentShaderPath, char *errorLog);
+                                  char *errorLog);
 void LC_GL_CreateTextureTextDSA(LC_GL_GameText *gameText, int32 fontAtlasWidth, int32 fontAtlasHeight,
-                               const uchar *fontAtlasBitmap);
+                                const uchar *fontAtlasBitmap);
 void LC_GL_CreateTextureTextNonDSA(LC_GL_GameText *gameText, int32 fontAtlasWidth, int32 fontAtlasHeight,
-                               const uchar *fontAtlasBitmap);
+                                   const uchar *fontAtlasBitmap);
 void LC_GL_SetupVaoAndVboTextDSA(LC_GL_GameText *gameText);
 void LC_GL_SetupVaoAndVboTextNonDSA(LC_GL_GameText *gameText);
 void LC_GL_RenderText(LC_GL_Renderer *renderer, const LC_GL_Text *text);
@@ -111,14 +116,14 @@ void LC_GL_InsertTextBytesIntoBuffer(float *buffer, const LC_GL_GameText *gameTe
 void LC_Color_Initialize(float red, float green, float blue, float alpha, LC_Color *color);
 LC_Color LC_Color_Create(float red, float green, float blue, float alpha);
 
+void LC_GL_InitializeRenderer(LC_Arena *arena, LC_GL_Renderer *renderer, int32 width, int32 height);
 int32 LC_GL_InitializeVideo(LC_Arena *arena, LC_GL_Renderer *renderer, const char *title, 
                             const char *fontName, char *errorLog);
 void LC_GL_FramebufferSizeCallback(int32 width, int32 height);
 void LC_GL_GetOpenGLVersionInfo();
 bool LC_GL_IsDSAAvailable(LC_GL_Renderer *renderer);
 void LC_SetupViewProjectionMatrix2D(int32 screenWidth, int32 screenHeight, mat4 viewProjectionMatrix);
-void LC_GL_SetupDefaultRectRenderer(LC_Arena *arena, LC_GL_Renderer *renderer, const char *vertexShaderPath, 
-                              const char *fragmentShaderPath, char *errorLog);
+void LC_GL_SetupDefaultRectRenderer(LC_Arena *arena, LC_GL_Renderer *renderer, char *errorLog);
 void LC_GL_ClearBackground(LC_Color color);
 void LC_GL_RenderRectangle(LC_GL_Renderer *renderer, const LC_Rect *rect, const LC_Color *color);
 bool LC_GL_SwapBuffer(SDL_Window *window, char *errorLog);

@@ -27,6 +27,18 @@ void LC_String_Initialize(LC_String *string, char *cString) {
     string->data = cString;
 }
 
+void LC_String_InitializeByCopy(LC_Arena *arena, LC_String *string, const char *cString) {
+    uint32 count = 0;
+
+    while (cString[count] != '\0') {
+        count++;
+    }
+
+    string->length = count;
+    string->data = LC_Arena_Allocate(arena, count + 1);
+    strncpy(string->data, cString, count + 1);
+}
+
 bool LC_String_IsEqualCString(const LC_String *string, const char *cString) {
     size_t cStringLength = strlen(cString);
     if (string->length != cStringLength) return false;

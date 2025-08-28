@@ -6,7 +6,7 @@ extern "C" {
 
 // =====================================Strings and String Operations================================================
 
-TEST(Strings, LC_InitializeString) {
+TEST(Strings, LC_String_Initialize) {
     // Arrange
     LC_String string;
     char message[] = "Hello, World!";
@@ -17,6 +17,25 @@ TEST(Strings, LC_InitializeString) {
     // Assert
     ASSERT_STREQ(string.data, "Hello, World!");
     ASSERT_EQ(string.length, 13);
+    ASSERT_EQ(string.data, message);
+}
+
+TEST(Strings, LC_String_InitializeByCopy) {
+    // Arrange
+    LC_Arena arena;
+    uchar buffer[1024];
+    LC_Arena_Initialize(&arena, buffer, 1024);
+    LC_String string;
+    const char *message = "This is a test!";
+
+    // Act
+    LC_String_InitializeByCopy(&arena, &string, message);
+
+    // Assert
+    ASSERT_EQ(string.length, 15);
+    ASSERT_STREQ(string.data, message);
+    ASSERT_STREQ(string.data, "This is a test!");
+    ASSERT_NE(string.data, message);
 }
 
 TEST(Strings, LC_IsEqualStringCString) {

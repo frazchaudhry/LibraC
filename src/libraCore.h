@@ -3,8 +3,12 @@
 
 #include <libraC.h>
 
+#ifndef DEFAULT_ALIGNMENT
+#define DEFAULT_ALIGNMENT (2*sizeof(void *))
+#endif
+
 // ===================================================================================================================
-// Strings and String Operations
+// Structs
 // ===================================================================================================================
 
 typedef struct {
@@ -12,22 +16,6 @@ typedef struct {
     char *data;
 } LC_String;
 
-void LC_String_Initialize(LC_String *string, char *cString);
-bool LC_String_IsEqualCString(const LC_String *string, const char *cString);
-bool LC_String_IsEqual(const LC_String *str1, const LC_String *str2);
-uint32 LC_String_GetLengthSkipSpaces(const LC_String *string);
-
-// ===================================================================================================================
-// Utility Operations
-// ===================================================================================================================
-void LC_SwapValues(void *x, void *y, size_t sizeOfElement, bool *success);
-
-// ===================================================================================================================
-// Memory Allocations
-// ===================================================================================================================
-#ifndef DEFAULT_ALIGNMENT
-#define DEFAULT_ALIGNMENT (2*sizeof(void *))
-#endif
 
 typedef struct {
     uchar *buffer;
@@ -42,6 +30,33 @@ typedef struct {
     size_t currentOffset;
 } TemporaryArenaMemory;
 
+typedef struct list {
+    uchar *_data;
+    uint32 _length;
+    uint32 _actualBufferSize;
+    size_t _sizeOfElement;
+} LC_List;
+
+
+// ===================================================================================================================
+// Strings and String Operations
+// ===================================================================================================================
+
+void LC_String_Initialize(LC_String *string, char *cString);
+void LC_String_InitializeByCopy(LC_Arena *arena, LC_String *string, const char *cString);
+bool LC_String_IsEqualCString(const LC_String *string, const char *cString);
+bool LC_String_IsEqual(const LC_String *str1, const LC_String *str2);
+uint32 LC_String_GetLengthSkipSpaces(const LC_String *string);
+
+// ===================================================================================================================
+// Utility Operations
+// ===================================================================================================================
+
+void LC_SwapValues(void *x, void *y, size_t sizeOfElement, bool *success);
+
+// ===================================================================================================================
+// Memory Allocations
+// ===================================================================================================================
 bool LC_IsPowerOfTwo(uintptr_t x);
 uintptr_t LC_AlignForward(uintptr_t ptr, size_t align);
 void* LC_AllocateAndAlignArena(LC_Arena *arena, size_t size, size_t align);
@@ -65,13 +80,6 @@ void LC_GetFileContentBinary(LC_Arena *arena, const char *filePath, uchar **file
 // ===================================================================================================================
 // Data Structures
 // ===================================================================================================================
-typedef struct list {
-    uchar *_data;
-    uint32 _length;
-    uint32 _actualBufferSize;
-    size_t _sizeOfElement;
-} LC_List;
-
 
 void LC_List_Initialize(LC_List *list, size_t sizeOfElement);
 uint32 LC_List_GetLength(const LC_List *list);
