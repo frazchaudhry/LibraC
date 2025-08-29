@@ -3,6 +3,15 @@
 
 #include <libraC.h>
 
+#define ASSERT(c, m) \
+do { \
+    if (!(c)) { \
+        SDL_LogError(SDL_LOG_CATEGORY_ERROR, __FILE__ ":%d: assertion %s failed: %s", \
+        __LINE__, #c, m); \
+        debug_break(); \
+    } \
+} while(0)
+
 #ifndef DEFAULT_ALIGNMENT
 #define DEFAULT_ALIGNMENT (2*sizeof(void *))
 #endif

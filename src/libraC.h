@@ -9,5 +9,6 @@
 #include <cglm.h>
 #include <glad/glad.h>
 #include <SDL3/SDL.h>
+#include <debugbreak.h>
 
 #endif //LIBRAC_H
