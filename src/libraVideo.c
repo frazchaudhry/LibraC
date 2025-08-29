@@ -2,7 +2,6 @@
 // Created by Fraz Mahmud on 5/14/2025.
 //
 
-#include "libraCore.h"
 #include <libraVideo.h>
 
 #define STB_TRUETYPE_IMPLEMENTATION
@@ -296,7 +295,7 @@ void LC_GL_RenderText(LC_GL_Renderer *renderer, const LC_GL_Text *text) {
     float buffer[sizeOfBuffer];
 
     LC_GL_InsertTextBytesIntoBuffer(buffer, renderer->gameText, text);
-
+    
     glEnable(GL_CULL_FACE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
