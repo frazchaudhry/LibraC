@@ -292,6 +292,9 @@ void LC_GL_RenderText(LC_GL_Renderer *renderer, const LC_GL_Text *text) {
     constexpr uint32 NUMBER_OF_FLOATS_PER_VERTEX = 9; // 3 for position, 4 for color, 2 for texture coordinates
     const GLuint sizeOfBuffer = (int64)sizeof(float) * totalVertices * NUMBER_OF_FLOATS_PER_VERTEX;
 
+    ASSERT(sizeOfBuffer < TEXT_STARTING_BUFFER_SIZE,
+           "Current text buffer size is smaller than initial buffer allocated on the GPU!");
+
     float buffer[sizeOfBuffer];
 
     LC_GL_InsertTextBytesIntoBuffer(buffer, renderer->gameText, text);
