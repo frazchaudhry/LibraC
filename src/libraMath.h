@@ -53,6 +53,12 @@ void LC_Matrix4D_InitializeF(float n00, float n01, float n02, float n03,
                             float n10, float n11, float n12, float n13,
                             float n20, float n21, float n22, float n23,
                             float n30, float n31, float n32, float n33, LC_Matrix4D mat4);
+void LC_Matrix2D_AddMatrix2D(const LC_Matrix2D a, const LC_Matrix2D b, LC_Matrix2D destination);
+void LC_Matrix3D_AddMatrix3D(const LC_Matrix3D a, const LC_Matrix3D b, LC_Matrix3D destination);
+void LC_Matrix4D_AddMatrix4D(const LC_Matrix4D a, const LC_Matrix4D b, LC_Matrix4D destination);
+void LC_Matrix2D_SubMatrix2D(const LC_Matrix2D a, const LC_Matrix2D b, LC_Matrix2D destination);
+void LC_Matrix3D_SubMatrix3D(const LC_Matrix3D a, const LC_Matrix3D b, LC_Matrix3D destination);
+void LC_Matrix4D_SubMatrix4D(const LC_Matrix4D a, const LC_Matrix4D b, LC_Matrix4D destination);
 void LC_Matrix2D_MulVector2D(LC_Matrix2D mat2, const LC_Vector2D vec2, LC_Vector2D destination);
 void LC_Matrix3D_MulVector3D(LC_Matrix3D mat3, const LC_Vector3D vec3, LC_Vector3D destination);
 void LC_Matrix4D_MulVector4D(LC_Matrix4D mat4, const LC_Vector4D vec4, LC_Vector4D destination);

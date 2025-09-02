@@ -224,6 +224,82 @@ void LC_Matrix4D_InitializeF(const float n00, const float n01, const float n02, 
     mat4[3][3] = n33;
 }
 
+void LC_Matrix2D_AddMatrix2D(const LC_Matrix2D a, const LC_Matrix2D b, LC_Matrix2D destination) {
+    destination[0][0] = a[0][0] + b[0][0];
+    destination[0][1] = a[0][1] + b[0][1];
+    destination[1][0] = a[1][0] + b[1][0];
+    destination[1][1] = a[1][1] + b[1][1];
+}
+
+void LC_Matrix3D_AddMatrix3D(const LC_Matrix3D a, const LC_Matrix3D b, LC_Matrix3D destination) {
+    destination[0][0] = a[0][0] + b[0][0];
+    destination[0][1] = a[0][1] + b[0][1];
+    destination[0][2] = a[0][2] + b[0][2];
+    destination[1][0] = a[1][0] + b[1][0];
+    destination[1][1] = a[1][1] + b[1][1];
+    destination[1][2] = a[1][2] + b[1][2];
+    destination[2][0] = a[2][0] + b[2][0];
+    destination[2][1] = a[2][1] + b[2][1];
+    destination[2][2] = a[2][2] + b[2][2];
+}
+
+void LC_Matrix4D_AddMatrix4D(const LC_Matrix4D a, const LC_Matrix4D b, LC_Matrix4D destination) {
+    destination[0][0] = a[0][0] + b[0][0];
+    destination[0][1] = a[0][1] + b[0][1];
+    destination[0][2] = a[0][2] + b[0][2];
+    destination[0][3] = a[0][3] + b[0][3];
+    destination[1][0] = a[1][0] + b[1][0];
+    destination[1][1] = a[1][1] + b[1][1];
+    destination[1][2] = a[1][2] + b[1][2];
+    destination[1][3] = a[1][3] + b[1][3];
+    destination[2][0] = a[2][0] + b[2][0];
+    destination[2][1] = a[2][1] + b[2][1];
+    destination[2][2] = a[2][2] + b[2][2];
+    destination[2][3] = a[2][3] + b[2][3];
+    destination[3][0] = a[3][0] + b[3][0];
+    destination[3][1] = a[3][1] + b[3][1];
+    destination[3][2] = a[3][2] + b[3][2];
+    destination[3][3] = a[3][3] + b[3][3];
+}
+
+void LC_Matrix2D_SubMatrix2D(const LC_Matrix2D a, const LC_Matrix2D b, LC_Matrix2D destination) {
+    destination[0][0] = a[0][0] - b[0][0];
+    destination[0][1] = a[0][1] - b[0][1];
+    destination[1][0] = a[1][0] - b[1][0];
+    destination[1][1] = a[1][1] - b[1][1];
+}
+
+void LC_Matrix3D_SubMatrix3D(const LC_Matrix3D a, const LC_Matrix3D b, LC_Matrix3D destination) {
+    destination[0][0] = a[0][0] - b[0][0];
+    destination[0][1] = a[0][1] - b[0][1];
+    destination[0][2] = a[0][2] - b[0][2];
+    destination[1][0] = a[1][0] - b[1][0];
+    destination[1][1] = a[1][1] - b[1][1];
+    destination[1][2] = a[1][2] - b[1][2];
+    destination[2][0] = a[2][0] - b[2][0];
+    destination[2][1] = a[2][1] - b[2][1];
+    destination[2][2] = a[2][2] - b[2][2];
+}
+
+void LC_Matrix4D_SubMatrix4D(const LC_Matrix4D a, const LC_Matrix4D b, LC_Matrix4D destination) {
+    destination[0][0] = a[0][0] - b[0][0];
+    destination[0][1] = a[0][1] - b[0][1];
+    destination[0][2] = a[0][2] - b[0][2];
+    destination[0][3] = a[0][3] - b[0][3];
+    destination[1][0] = a[1][0] - b[1][0];
+    destination[1][1] = a[1][1] - b[1][1];
+    destination[1][2] = a[1][2] - b[1][2];
+    destination[1][3] = a[1][3] - b[1][3];
+    destination[2][0] = a[2][0] - b[2][0];
+    destination[2][1] = a[2][1] - b[2][1];
+    destination[2][2] = a[2][2] - b[2][2];
+    destination[2][3] = a[2][3] - b[2][3];
+    destination[3][0] = a[3][0] - b[3][0];
+    destination[3][1] = a[3][1] - b[3][1];
+    destination[3][2] = a[3][2] - b[3][2];
+    destination[3][3] = a[3][3] - b[3][3];
+}
+
 void LC_Matrix2D_MulVector2D(LC_Matrix2D mat2, const LC_Vector2D vec2, LC_Vector2D destination) {
     destination[0] = mat2[0][0] * vec2[0] + mat2[1][0] * vec2[1];
     destination[1] = mat2[0][1] * vec2[0] + mat2[1][1] * vec2[1];
