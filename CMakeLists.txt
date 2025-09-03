@@ -34,7 +34,7 @@ add_library(LibraC STATIC src/libraCore.c
     src/linux/libraC-linux.c
     src/libraMath.h
     src/libraMath.c)
-target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wfatal-errors)
+target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wfatal-errors -Wunused-variable)
 
 target_include_directories(${PROJECT_NAME} PUBLIC src external/cglm external/stb external/debug_break)
 
