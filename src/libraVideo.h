@@ -122,7 +122,6 @@ int32 LC_GL_InitializeVideo(LC_Arena *arena, LC_GL_Renderer *renderer, const cha
 void LC_GL_FramebufferSizeCallback(int32 width, int32 height);
 void LC_GL_GetOpenGLVersionInfo();
 bool LC_GL_IsDSAAvailable(LC_GL_Renderer *renderer);
-void LC_SetupViewProjectionMatrix2D(int32 screenWidth, int32 screenHeight, mat4 viewProjectionMatrix);
 void LC_GL_SetupDefaultRectRenderer(LC_Arena *arena, LC_GL_Renderer *renderer, char *errorLog);
 void LC_GL_ClearBackground(LC_Color color);
 void LC_GL_RenderRectangle(LC_GL_Renderer *renderer, const LC_Rect *rect, const LC_Color *color);

@@ -533,7 +533,9 @@ int32 LC_GL_InitializeVideo(LC_Arena *arena, LC_GL_Renderer *renderer, const cha
 
     glViewport(0, 0, renderer->screenWidth, renderer->screenHeight);
 
-    LC_SetupViewProjectionMatrix2D(renderer->screenWidth, renderer->screenHeight, renderer->viewProjectionMatrix);
+    // Setup Orthographic projection
+    glm_ortho(0.0f, (float)renderer->screenWidth, (float)renderer->screenHeight, 0.0f, -1.0f, 1.0f,
+              renderer->viewProjectionMatrix);
 
     LC_GL_IsDSAAvailable(renderer) ? 
         LC_String_InitializeByCopy(arena, renderer->defaultShader->vertexShaderPath, "shaders/default.vert") : 
@@ -574,24 +576,6 @@ bool LC_GL_IsDSAAvailable(LC_GL_Renderer *renderer) {
     if (renderer->glMajorVersion >= 4 && renderer->glMinorVersion < 5) return false;
 
     return true;
-}
-
-void LC_SetupViewProjectionMatrix2D(const int32 screenWidth, const int32 screenHeight, mat4 viewProjectionMatrix) {
-    mat4 projection;
-    glm_ortho(0.0f, (float)screenWidth, (float)screenHeight, 0.0f, -1.0f, 1.0f, projection);
-    mat4 view = GLM_MAT4_IDENTITY_INIT;
-    vec3 translate = { 0.0f, 0.0f, 0.0f };
-    glm_translate(view, translate);
-    vec3 xAxis = { 1.0f, 0.0f, 0.0f };
-    vec3 yAxis = { 0.0f, -1.0f, 0.0f };
-    vec3 zAxis = { 0.0f, 0.0f, 1.0f };
-    glm_rotate(view, 0.0f, xAxis);
-    glm_rotate(view, 0.0f, yAxis);
-    glm_rotate(view, 0.0f, zAxis);
-    vec3 scale = { 1.0f, 1.0f, 1.0f };
-    glm_scale(view, scale);
-
-    glm_mat4_mul(projection, view, viewProjectionMatrix);
 }
 
 void LC_GL_SetupDefaultRectRenderer(LC_Arena *arena, LC_GL_Renderer *renderer, char *errorLog) {
