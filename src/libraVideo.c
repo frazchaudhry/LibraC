@@ -2,6 +2,7 @@
 // Created by Fraz Mahmud on 5/14/2025.
 //
 
+#include "glad/glad.h"
 #include <libraVideo.h>
 
 #define STB_TRUETYPE_IMPLEMENTATION
@@ -446,7 +447,7 @@ void LC_GL_InsertTextBytesIntoBuffer(float *buffer, const LC_GL_GameText *gameTe
 }
 
 void LC_GL_DeleteTextRenderer(const LC_GL_GameText *gameText) {
-    glDeleteBuffers(1, &gameText->vao);
+    glDeleteVertexArrays(1, &gameText->vao);
     glDeleteBuffers(1, &gameText->vbo);
     glDeleteTextures(1, &gameText->fontAtlasTextureId);
     glDeleteProgram(gameText->fontShader->programId);
@@ -584,8 +585,13 @@ void LC_GL_SetupDefaultRectRenderer(LC_Arena *arena, LC_GL_Renderer *renderer, c
     }
 
     // Setup VAO, VBO, EBO
-    constexpr GLuint sizeOfBuffer = sizeof(float) * 4 * 7; // Size of float * number of vertices * stride(3 pos, 4 color)
-    
+    constexpr float vertices[] = {
+        1.0f, 0.0f, // Top Right
+        1.0f, 1.0f, // Bottom Right
+        0.0f, 1.0f, // Bottom Left
+        0.0f, 0.0f  // Top Left
+    };
+
     const uint32 indices[] = {
         0 , 1, 3,
         1, 2, 3
@@ -606,46 +612,41 @@ void LC_GL_SetupDefaultRectRenderer(LC_Arena *arena, LC_GL_Renderer *renderer, c
         // With GL_STREAM_DRAW the data is set only once and used by the GPU at most a few times.
         // With GL_STATIC_DRAW the data is set only once and used many times
         // With GL_DYNAMIC_DRAW the data is changed a lot and used many times.
-        glBufferData(GL_ARRAY_BUFFER, sizeOfBuffer, nullptr, GL_DYNAMIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer->defaultElementBufferObject);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float), nullptr);
-        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void *)(3 * sizeof(float)));
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), nullptr);
         glEnableVertexAttribArray(0);
-        glEnableVertexAttribArray(1);
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);
 
         glBindVertexArray(0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
         return;
     }
 
     glCreateBuffers(1, &renderer->defaultVertexBufferObject);
-    glNamedBufferStorage(renderer->defaultVertexBufferObject, sizeOfBuffer, nullptr, GL_DYNAMIC_STORAGE_BIT);
+    glNamedBufferStorage(renderer->defaultVertexBufferObject, sizeof(vertices), vertices, 0);
 
     glCreateBuffers(1, &renderer->defaultElementBufferObject);
-    glNamedBufferStorage(renderer->defaultElementBufferObject, sizeof(indices), indices, GL_DYNAMIC_STORAGE_BIT);
+    glNamedBufferStorage(renderer->defaultElementBufferObject, sizeof(indices), indices, 0);
 
     glCreateVertexArrays(1, &renderer->defaultVertexArrayObject);
     constexpr GLuint vaoBindingPoint = 0;
     glVertexArrayVertexBuffer(renderer->defaultVertexArrayObject, vaoBindingPoint, 
-                              renderer->defaultVertexBufferObject, 0, 7 * sizeof(float));
+                              renderer->defaultVertexBufferObject, 0, 2 * sizeof(float));
     glVertexArrayElementBuffer(renderer->defaultVertexArrayObject, renderer->defaultElementBufferObject);
 
     constexpr uint8 positionIndex = 0;
-    constexpr uint8 colorIndex = 1;
 
     glEnableVertexArrayAttrib(renderer->defaultVertexArrayObject, positionIndex);
-    glEnableVertexArrayAttrib(renderer->defaultVertexArrayObject, colorIndex);
 
-    glVertexArrayAttribFormat(renderer->defaultVertexArrayObject, positionIndex, 3, GL_FLOAT, GL_FALSE, 0);
-    glVertexArrayAttribFormat(renderer->defaultVertexArrayObject, colorIndex, 4, GL_FLOAT, GL_FALSE, 3 * sizeof(float));
+    glVertexArrayAttribFormat(renderer->defaultVertexArrayObject, positionIndex, 2, GL_FLOAT, GL_FALSE, 0);
 
     glVertexArrayAttribBinding(renderer->defaultVertexArrayObject, positionIndex, vaoBindingPoint);
-    glVertexArrayAttribBinding(renderer->defaultVertexArrayObject, colorIndex, vaoBindingPoint);
 }
 
 void LC_GL_ClearBackground(const LC_Color color) {
@@ -654,23 +655,22 @@ void LC_GL_ClearBackground(const LC_Color color) {
 }
 
 void LC_GL_RenderRectangle(LC_GL_Renderer *renderer, const LC_Rect *rect, const LC_Color *color) {
-    // Identify and setup vertices for position and color
-    const float vertices[] = {
-        (float)rect->x + (float)rect->w, (float)rect->y, 0.0f, color->r, color->g, color->b, color->a, // Top Right
-        (float)rect->x + (float)rect->w, (float)rect->y + (float)rect->h, 0.0f, color->r, color->g, color->b, color->a, // Bottom Right
-        (float)rect->x, (float)rect->y + (float)rect->h, 0.0f, color->r, color->g, color->b, color->a, // Bottom Left
-        (float)rect->x, (float)rect->y, 0.0f, (float)color->r, color->g, color->b, color->a, // Top Left
-    };
-
+    const vec4 aColor = { color->r, color->g, color->b, color->a };
+    mat4 model = GLM_MAT4_IDENTITY_INIT;
+    vec3 translate = { (float)rect->x, (float)rect->y, 0.0f };
+    glm_translate(model, translate);
+    vec3 scale = { (float)rect->w, (float)rect->h, 1.0f };
+    glm_scale(model, scale);
     GLuint defaultShaderProgramId = renderer->defaultShader->programId;
     if (!LC_GL_IsDSAAvailable(renderer)) {
         // Setup Before Render
         glUseProgram(defaultShaderProgramId);
+        LC_GL_SetUniformVec4(defaultShaderProgramId, "aColor", aColor);
+        LC_GL_SetUniformMat4(defaultShaderProgramId, "model", &model);
         LC_GL_SetUniformMat4(defaultShaderProgramId, "viewProjectionMatrix",
                              &renderer->viewProjectionMatrix);
         glBindVertexArray(renderer->defaultVertexArrayObject);
         glBindBuffer(GL_ARRAY_BUFFER, renderer->defaultVertexBufferObject);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
 
         // Render
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
@@ -682,10 +682,11 @@ void LC_GL_RenderRectangle(LC_GL_Renderer *renderer, const LC_Rect *rect, const 
     }
     // Setup Before Render
     glUseProgram(defaultShaderProgramId);
+    LC_GL_SetUniformVec4(defaultShaderProgramId, "aColor", aColor);
+        LC_GL_SetUniformMat4(defaultShaderProgramId, "model", &model);
     LC_GL_SetUniformMat4(defaultShaderProgramId, "viewProjectionMatrix",
                          &renderer->viewProjectionMatrix);
     glBindVertexArray(renderer->defaultVertexArrayObject);
-    glNamedBufferSubData(renderer->defaultVertexBufferObject, 0, sizeof(vertices), vertices);
 
     // Render
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
@@ -704,6 +705,9 @@ bool LC_GL_SwapBuffer(SDL_Window *window, char *errorLog) {
 
 void LC_GL_FreeResources(const LC_GL_Renderer *renderer) {
     LC_GL_DeleteTextRenderer(renderer->gameText);
+    glDeleteBuffers(1, &renderer->defaultVertexBufferObject);
+    glDeleteBuffers(1, &renderer->defaultElementBufferObject);
+    glDeleteVertexArrays(1, &renderer->defaultVertexArrayObject);
     SDL_GLContext glContext = SDL_GL_GetCurrentContext();
 
     SDL_GL_DestroyContext(glContext);

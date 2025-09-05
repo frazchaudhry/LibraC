@@ -1,14 +1,15 @@
 #version 460 core
 
-layout (location = 0) in vec3 aPos;
-layout (location = 1) in vec4 aColor;
+layout (location = 0) in vec2 aPos;
 
 out vec4 vColor;
 
+uniform vec4 aColor;
+uniform mat4 model;
 uniform mat4 viewProjectionMatrix;
 
 void main()
 {
-    gl_Position = viewProjectionMatrix * vec4(aPos, 1.0f);
+    gl_Position = viewProjectionMatrix * model * vec4(aPos, 0.0, 1.0f);
     vColor = vec4(aColor.rgb / 255, aColor.a);
 }
