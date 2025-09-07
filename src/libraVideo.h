@@ -104,8 +104,8 @@ void LC_GL_CreateTextureTextNonDSA(LC_GL_GameText *gameText, int32 fontAtlasWidt
 void LC_GL_SetupVaoAndVboTextDSA(LC_GL_GameText *gameText);
 void LC_GL_SetupVaoAndVboTextNonDSA(LC_GL_GameText *gameText);
 void LC_GL_RenderText(LC_GL_Renderer *renderer, const LC_GL_Text *text);
-void LC_GL_RenderTextDSA(LC_GL_Renderer *renderer, GLint totalVertices, GLuint sizeOfBuffer, const float *buffer);
-void LC_GL_RenderTextNonDSA(LC_GL_Renderer *renderer, GLint totalVertices, GLuint sizeOfBuffer, const float *buffer);
+void LC_GL_RenderTextDSA(const LC_GL_Renderer *renderer, GLint totalVertices, GLuint sizeOfBuffer, const float *buffer);
+void LC_GL_RenderTextNonDSA(const LC_GL_Renderer *renderer, GLint totalVertices, GLuint sizeOfBuffer, const float *buffer);
 void LC_GL_InsertTextBytesIntoBuffer(float *buffer, const LC_GL_GameText *gameText,
                                      const LC_GL_Text *text);
 
@@ -121,10 +121,10 @@ int32 LC_GL_InitializeVideo(LC_Arena *arena, LC_GL_Renderer *renderer, const cha
                             const char *fontName, char *errorLog);
 void LC_GL_FramebufferSizeCallback(int32 width, int32 height);
 void LC_GL_GetOpenGLVersionInfo();
-bool LC_GL_IsDSAAvailable(LC_GL_Renderer *renderer);
+bool LC_GL_IsDSAAvailable(const LC_GL_Renderer *renderer);
 void LC_GL_SetupDefaultRectRenderer(LC_Arena *arena, LC_GL_Renderer *renderer, char *errorLog);
 void LC_GL_ClearBackground(LC_Color color);
-void LC_GL_RenderRectangle(LC_GL_Renderer *renderer, const LC_Rect *rect, const LC_Color *color);
+void LC_GL_RenderRectangle(const LC_GL_Renderer *renderer, const LC_Rect *rect, const LC_Color *color);
 bool LC_GL_SwapBuffer(SDL_Window *window, char *errorLog);
 void LC_GL_FreeResources(const LC_GL_Renderer *renderer);
 

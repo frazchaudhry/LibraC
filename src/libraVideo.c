@@ -2,7 +2,6 @@
 // Created by Fraz Mahmud on 5/14/2025.
 //
 
-#include "glad/glad.h"
 #include <libraVideo.h>
 
 #define STB_TRUETYPE_IMPLEMENTATION
@@ -65,7 +64,7 @@ void LC_GL_SetUniformMat4(const GLuint programId, const char *name, const mat4 *
 }
 
 bool LC_GL_InitializeShader(LC_Arena *arena, LC_GL_Shader *shader, char *buffer) {
-    TemporaryArenaMemory localArena = LC_Arena_BeginTemporaryMemory(arena);
+    const TemporaryArenaMemory localArena = LC_Arena_BeginTemporaryMemory(arena);
 
     char *vertexShaderSource = nullptr;
     char *fragmentShaderSource = nullptr;
@@ -211,7 +210,7 @@ void LC_GL_CreateTextureTextDSA(LC_GL_GameText *gameText, const int32 fontAtlasW
                         fontAtlasBitmap);
 }
 
-void LC_GL_CreateTextureTextNonDSA(LC_GL_GameText *gameText, int32 fontAtlasWidth, int32 fontAtlasHeight,
+void LC_GL_CreateTextureTextNonDSA(LC_GL_GameText *gameText, const int32 fontAtlasWidth, const int32 fontAtlasHeight,
                                const uchar *fontAtlasBitmap) {
     glGenTextures(1, &gameText->fontAtlasTextureId);
     glBindTexture(GL_TEXTURE_2D, gameText->fontAtlasTextureId);
@@ -284,8 +283,8 @@ void LC_GL_SetupVaoAndVboTextNonDSA(LC_GL_GameText *gameText) {
 }
 
 void LC_GL_RenderText(LC_GL_Renderer *renderer, const LC_GL_Text *text) {
-    uint64 totalCharacters = LC_String_GetLengthSkipSpaces(&text->string);
-    GLuint fontShaderProgramId = renderer->gameText->fontShader->programId;
+    const uint64 totalCharacters = LC_String_GetLengthSkipSpaces(&text->string);
+    const GLuint fontShaderProgramId = renderer->gameText->fontShader->programId;
 
     // Each quad has 4 vertices
     const uint32 MAX_QUADS = totalCharacters;
@@ -315,8 +314,8 @@ void LC_GL_RenderText(LC_GL_Renderer *renderer, const LC_GL_Text *text) {
     glUseProgram(0);
 }
 
-void LC_GL_RenderTextDSA(LC_GL_Renderer *renderer, GLint totalVertices, GLuint sizeOfBuffer, const float *buffer) {
-    GLuint fontShaderProgramId = renderer->gameText->fontShader->programId;
+void LC_GL_RenderTextDSA(const LC_GL_Renderer *renderer, const GLint totalVertices, const GLuint sizeOfBuffer, const float *buffer) {
+    const GLuint fontShaderProgramId = renderer->gameText->fontShader->programId;
 
     LC_GL_SetUniformInt(fontShaderProgramId, "fontAtlasTexture", 0);
     LC_GL_SetUniformMat4(fontShaderProgramId, "viewProjectionMatrix",
@@ -337,8 +336,8 @@ void LC_GL_RenderTextDSA(LC_GL_Renderer *renderer, GLint totalVertices, GLuint s
     glBindVertexArray(0);
 }
 
-void LC_GL_RenderTextNonDSA(LC_GL_Renderer *renderer, GLint totalVertices, GLuint sizeOfBuffer, const float *buffer) {
-    GLuint fontShaderProgramId = renderer->gameText->fontShader->programId;
+void LC_GL_RenderTextNonDSA(const LC_GL_Renderer *renderer, const GLint totalVertices, const GLuint sizeOfBuffer, const float *buffer) {
+    const GLuint fontShaderProgramId = renderer->gameText->fontShader->programId;
 
     // Bind the Texture
     glBindTexture(GL_TEXTURE_2D, renderer->gameText->fontAtlasTextureId);
@@ -474,7 +473,7 @@ LC_Color LC_Color_Create(const float red, const float green, const float blue, c
     return color;
 }
 
-void LC_GL_InitializeRenderer(LC_Arena *arena, LC_GL_Renderer *renderer, int32 width, int32 height) {
+void LC_GL_InitializeRenderer(LC_Arena *arena, LC_GL_Renderer *renderer, const int32 width, const int32 height) {
     renderer->gameText = LC_Arena_Allocate(arena, sizeof(LC_GL_GameText));
     renderer->screenWidth = width;
     renderer->screenHeight = height;
@@ -496,8 +495,8 @@ int32 LC_GL_InitializeVideo(LC_Arena *arena, LC_GL_Renderer *renderer, const cha
 
     /* Set OpenGL settings. */
     // We try to get the latest OpenGL version if available
-    GLint majorVersion = 4;
-    GLint minorVersion = 6;
+    constexpr GLint majorVersion = 4;
+    constexpr GLint minorVersion = 6;
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, majorVersion);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, minorVersion);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
@@ -572,8 +571,9 @@ void LC_GL_GetOpenGLVersionInfo() {
     SDL_Log("Shading Language: %s", (char*)glGetString(GL_SHADING_LANGUAGE_VERSION));
 }
 
-bool LC_GL_IsDSAAvailable(LC_GL_Renderer *renderer) {
+bool LC_GL_IsDSAAvailable(const LC_GL_Renderer *renderer) {
     if (renderer->glMajorVersion < 4) return false;
+    // ReSharper disable once CppDFAConstantConditions
     if (renderer->glMajorVersion >= 4 && renderer->glMinorVersion < 5) return false;
 
     return true;
@@ -583,6 +583,10 @@ void LC_GL_SetupDefaultRectRenderer(LC_Arena *arena, LC_GL_Renderer *renderer, c
     if (!LC_GL_InitializeShader(arena, renderer->defaultShader, errorLog)) {
         SDL_Log("%s", errorLog);
     }
+
+    glUseProgram(renderer->defaultShader->programId);
+    LC_GL_SetUniformMat4(renderer->defaultShader->programId, "viewProjectionMatrix",
+                         &renderer->viewProjectionMatrix);
 
     // Setup VAO, VBO, EBO
     constexpr float vertices[] = {
@@ -620,9 +624,8 @@ void LC_GL_SetupDefaultRectRenderer(LC_Arena *arena, LC_GL_Renderer *renderer, c
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), nullptr);
         glEnableVertexAttribArray(0);
 
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-
         glBindVertexArray(0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
         return;
@@ -654,38 +657,32 @@ void LC_GL_ClearBackground(const LC_Color color) {
     glClear(GL_COLOR_BUFFER_BIT);
 }
 
-void LC_GL_RenderRectangle(LC_GL_Renderer *renderer, const LC_Rect *rect, const LC_Color *color) {
+void LC_GL_RenderRectangle(const LC_GL_Renderer *renderer, const LC_Rect *rect, const LC_Color *color) {
     const vec4 aColor = { color->r, color->g, color->b, color->a };
     mat4 model = GLM_MAT4_IDENTITY_INIT;
     vec3 translate = { (float)rect->x, (float)rect->y, 0.0f };
     glm_translate(model, translate);
     vec3 scale = { (float)rect->w, (float)rect->h, 1.0f };
     glm_scale(model, scale);
-    GLuint defaultShaderProgramId = renderer->defaultShader->programId;
+    const GLuint defaultShaderProgramId = renderer->defaultShader->programId;
     if (!LC_GL_IsDSAAvailable(renderer)) {
         // Setup Before Render
         glUseProgram(defaultShaderProgramId);
         LC_GL_SetUniformVec4(defaultShaderProgramId, "aColor", aColor);
         LC_GL_SetUniformMat4(defaultShaderProgramId, "model", &model);
-        LC_GL_SetUniformMat4(defaultShaderProgramId, "viewProjectionMatrix",
-                             &renderer->viewProjectionMatrix);
         glBindVertexArray(renderer->defaultVertexArrayObject);
-        glBindBuffer(GL_ARRAY_BUFFER, renderer->defaultVertexBufferObject);
 
         // Render
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
         // Unbind VAO and VBO
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
         return;
     }
     // Setup Before Render
     glUseProgram(defaultShaderProgramId);
     LC_GL_SetUniformVec4(defaultShaderProgramId, "aColor", aColor);
-        LC_GL_SetUniformMat4(defaultShaderProgramId, "model", &model);
-    LC_GL_SetUniformMat4(defaultShaderProgramId, "viewProjectionMatrix",
-                         &renderer->viewProjectionMatrix);
+    LC_GL_SetUniformMat4(defaultShaderProgramId, "model", &model);
     glBindVertexArray(renderer->defaultVertexArrayObject);
 
     // Render
