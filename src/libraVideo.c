@@ -12,7 +12,9 @@
 
 static constexpr GLuint TEXT_STARTING_BUFFER_SIZE = 3600; // 4(sizeof(float)) * 100(Vertices) * 9 (Number of float per vertex)
 
-// =============================================SHADER===============================================================
+// ==================================================================================================================
+// SHADER
+// ==================================================================================================================
 
 void LC_GL_SetUniformBool(const GLuint programId, const char *name, const bool value) {
     glUniform1i(glGetUniformLocation(programId, name), (int32)value);
@@ -131,10 +133,10 @@ bool CheckCompileErrors(const GLuint programId, char *type, char *buffer) {
 }
 
 // ==================================================================================================================
+// Text Rendering
+// ==================================================================================================================
 
-// =============================================Text Rendering=======================================================
-
-bool LC_GL_InitializeTextRenderer(LC_Arena *arena, LC_GL_Renderer *renderer, const char *fontName, const float fontSize,
+bool LC_GL_InitializeTextRenderer(LC_Arena *arena, const LC_GL_Renderer *renderer, const char *fontName, const float fontSize,
                                   char *errorLog) {
     constexpr size_t STARTING_ARENA_SIZE = 300 * 1024;
     void *localArenaBuffer = malloc(STARTING_ARENA_SIZE);
@@ -282,7 +284,7 @@ void LC_GL_SetupVaoAndVboTextNonDSA(LC_GL_GameText *gameText) {
     glBindVertexArray(0);
 }
 
-void LC_GL_RenderText(LC_GL_Renderer *renderer, const LC_GL_Text *text) {
+void LC_GL_RenderText(const LC_GL_Renderer *renderer, const LC_GL_Text *text) {
     const uint64 totalCharacters = LC_String_GetLengthSkipSpaces(&text->string);
     const GLuint fontShaderProgramId = renderer->gameText->fontShader->programId;
 
@@ -453,8 +455,8 @@ void LC_GL_DeleteTextRenderer(const LC_GL_GameText *gameText) {
 }
 
 // ==================================================================================================================
-
-// =============================================Video Core============================================================
+// Video Core
+// ==================================================================================================================
 
 void LC_Color_Initialize(const float red, const float green, const float blue, const float alpha, LC_Color *color) {
     color->r = red;
@@ -714,7 +716,5 @@ void LC_GL_FreeResources(const LC_GL_Renderer *renderer) {
 }
 
 // ==================================================================================================================
-
-// =============================================Video Errors=========================================================
-
+// Video Errors
 // ==================================================================================================================

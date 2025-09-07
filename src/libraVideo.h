@@ -95,7 +95,7 @@ bool CheckCompileErrors(GLuint programId, char *type, char *buffer);
 
 // =============================================Text Rendering=======================================================
 
-bool LC_GL_InitializeTextRenderer(LC_Arena *arena, LC_GL_Renderer *renderer, const char *fontName, float fontSize,
+bool LC_GL_InitializeTextRenderer(LC_Arena *arena, const LC_GL_Renderer *renderer, const char *fontName, float fontSize,
                                   char *errorLog);
 void LC_GL_CreateTextureTextDSA(LC_GL_GameText *gameText, int32 fontAtlasWidth, int32 fontAtlasHeight,
                                 const uchar *fontAtlasBitmap);
@@ -103,7 +103,7 @@ void LC_GL_CreateTextureTextNonDSA(LC_GL_GameText *gameText, int32 fontAtlasWidt
                                    const uchar *fontAtlasBitmap);
 void LC_GL_SetupVaoAndVboTextDSA(LC_GL_GameText *gameText);
 void LC_GL_SetupVaoAndVboTextNonDSA(LC_GL_GameText *gameText);
-void LC_GL_RenderText(LC_GL_Renderer *renderer, const LC_GL_Text *text);
+void LC_GL_RenderText(const LC_GL_Renderer *renderer, const LC_GL_Text *text);
 void LC_GL_RenderTextDSA(const LC_GL_Renderer *renderer, GLint totalVertices, GLuint sizeOfBuffer, const float *buffer);
 void LC_GL_RenderTextNonDSA(const LC_GL_Renderer *renderer, GLint totalVertices, GLuint sizeOfBuffer, const float *buffer);
 void LC_GL_InsertTextBytesIntoBuffer(float *buffer, const LC_GL_GameText *gameText,
