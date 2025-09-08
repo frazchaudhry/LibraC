@@ -230,11 +230,12 @@ void LC_GetFileContentString(LC_Arena *arena, const char *filePath, char **fileC
     fclose(file);
 }
 
-void LC_GetFileContentBinary(LC_Arena *arena, const char *filePath, uchar **fileContents, size_t *fileSize) {
+bool LC_GetFileContentBinary(LC_Arena *arena, const char *filePath, uchar **fileContents, size_t *fileSize, char *errorLog) {
     FILE *file = fopen(filePath, "rb");
     if (file == NULL) {
         *fileSize = 0;
-        return;
+        snprintf(errorLog, 1024, "File not found: %s", filePath);
+        return false;
     }
 
     fseek(file, 0, SEEK_END);
@@ -244,10 +245,13 @@ void LC_GetFileContentBinary(LC_Arena *arena, const char *filePath, uchar **file
     *fileContents = LC_Arena_Allocate(arena, *fileSize);
     if (*fileContents == NULL) {
         fclose(file);
-        return;
+        snprintf(errorLog, 1024, "Memory allocation failed: %s", filePath);
+        return false;
     }
     fread(*fileContents, *fileSize, 1, file);
     fclose(file);
+
+    return true;
 }
 
 // ===================================================================================================================

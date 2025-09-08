@@ -151,7 +151,10 @@ bool LC_GL_InitializeTextRenderer(LC_Arena *arena, const LC_GL_Renderer *rendere
 
     size_t fontFileSize;
     uchar *fontBuffer;
-    LC_GetFileContentBinary(&localArena, fontName, &fontBuffer, &fontFileSize);
+    if (!LC_GetFileContentBinary(&localArena, fontName, &fontBuffer, &fontFileSize, errorLog)) {
+        SDL_Log("%s", errorLog);
+        return false;
+    }
 
     const int32 fontCount = stbtt_GetNumberOfFonts(fontBuffer);
     if (fontCount == -1) {

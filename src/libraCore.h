@@ -88,7 +88,7 @@ void LC_Arena_EndTemporary(TemporaryArenaMemory temporaryArena);
 // ===================================================================================================================
 
 void LC_GetFileContentString(LC_Arena *arena, const char *filePath, char **fileContents);
-void LC_GetFileContentBinary(LC_Arena *arena, const char *filePath, uchar **fileContents, size_t *fileSize);
+bool LC_GetFileContentBinary(LC_Arena *arena, const char *filePath, uchar **fileContents, size_t *fileSize, char *errorLog);
 
 // ===================================================================================================================
 // Data Structures
