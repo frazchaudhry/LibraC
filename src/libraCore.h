@@ -59,7 +59,7 @@ void LC_String_Initialize(LC_String *string, char *cString);
 void LC_String_InitializeByCopy(LC_Arena *arena, LC_String *string, const char *cString);
 bool LC_String_IsEqualCString(const LC_String *string, const char *cString);
 bool LC_String_IsEqual(const LC_String *str1, const LC_String *str2);
-uint32 LC_String_GetLengthSkipSpaces(const LC_String *string);
+uint32 LC_GetStringLengthSkipSpaces(const char *string, uint32 length);
 
 // ===================================================================================================================
 // Utility Operations

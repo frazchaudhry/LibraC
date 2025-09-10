@@ -60,12 +60,12 @@ bool LC_String_IsEqual(const LC_String *str1, const LC_String *str2) {
     return true;
 }
 
-uint32 LC_String_GetLengthSkipSpaces(const LC_String *string) {
+uint32 LC_GetStringLengthSkipSpaces(const char *string, const uint32 length) {
     uint32 count = 0;
-    if (string == NULL || string->data == NULL) return count;
+    if (string == NULL) return count;
 
-    for (size_t i = 0; i < string->length; i++) {
-        if (string->data[i] != ' ') {
+    for (size_t i = 0; i < length; i++) {
+        if (string[i] != ' ') {
             count++;
         }
     }

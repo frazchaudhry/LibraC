@@ -147,7 +147,7 @@ bool LC_GL_InitializeTextRenderer(LC_Arena *arena, const LC_GL_Renderer *rendere
         SDL_Log("%s", errorLog);
         return false;
     }
-    LC_GL_GameText *gameText = renderer->gameText;
+    LC_GL_TextSettings *gameText = renderer->gameText;
 
     size_t fontFileSize;
     uchar *fontBuffer;
@@ -197,7 +197,7 @@ bool LC_GL_InitializeTextRenderer(LC_Arena *arena, const LC_GL_Renderer *rendere
     return true;
 }
 
-void LC_GL_CreateTextureTextDSA(LC_GL_GameText *gameText, const int32 fontAtlasWidth, const int32 fontAtlasHeight,
+void LC_GL_CreateTextureTextDSA(LC_GL_TextSettings *gameText, const int32 fontAtlasWidth, const int32 fontAtlasHeight,
                                const uchar *fontAtlasBitmap) {
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
@@ -215,7 +215,7 @@ void LC_GL_CreateTextureTextDSA(LC_GL_GameText *gameText, const int32 fontAtlasW
                         fontAtlasBitmap);
 }
 
-void LC_GL_CreateTextureTextNonDSA(LC_GL_GameText *gameText, const int32 fontAtlasWidth, const int32 fontAtlasHeight,
+void LC_GL_CreateTextureTextNonDSA(LC_GL_TextSettings *gameText, const int32 fontAtlasWidth, const int32 fontAtlasHeight,
                                const uchar *fontAtlasBitmap) {
     glGenTextures(1, &gameText->fontAtlasTextureId);
     glBindTexture(GL_TEXTURE_2D, gameText->fontAtlasTextureId);
@@ -232,7 +232,7 @@ void LC_GL_CreateTextureTextNonDSA(LC_GL_GameText *gameText, const int32 fontAtl
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void LC_GL_SetupVaoAndVboTextDSA(LC_GL_GameText *gameText) {
+void LC_GL_SetupVaoAndVboTextDSA(LC_GL_TextSettings *gameText) {
     glCreateBuffers(1, &gameText->vbo);
     glNamedBufferStorage(gameText->vbo, TEXT_STARTING_BUFFER_SIZE, nullptr, GL_DYNAMIC_STORAGE_BIT);
 
@@ -257,7 +257,7 @@ void LC_GL_SetupVaoAndVboTextDSA(LC_GL_GameText *gameText) {
     glVertexArrayAttribBinding(gameText->vao, texCoordIndex, vaoBindingPoint);
 }
 
-void LC_GL_SetupVaoAndVboTextNonDSA(LC_GL_GameText *gameText) {
+void LC_GL_SetupVaoAndVboTextNonDSA(LC_GL_TextSettings *gameText) {
     // Setting up the VAO and VBO
     glGenBuffers(1, &gameText->vbo);
     glBindBuffer(GL_ARRAY_BUFFER, gameText->vbo);
@@ -288,7 +288,7 @@ void LC_GL_SetupVaoAndVboTextNonDSA(LC_GL_GameText *gameText) {
 }
 
 void LC_GL_RenderText(const LC_GL_Renderer *renderer, const LC_GL_Text *text) {
-    const uint64 totalCharacters = LC_String_GetLengthSkipSpaces(&text->string);
+    const uint64 totalCharacters = LC_GetStringLengthSkipSpaces((const char*)text->string, strlen(text->string));
     const GLuint fontShaderProgramId = renderer->gameText->fontShader->programId;
 
     // Each quad has 4 vertices
@@ -362,15 +362,17 @@ void LC_GL_RenderTextNonDSA(const LC_GL_Renderer *renderer, const GLint totalVer
     glBindVertexArray(0);
 }
 
-void LC_GL_InsertTextBytesIntoBuffer(float *buffer, const LC_GL_GameText *gameText, const LC_GL_Text *text) {
+void LC_GL_InsertTextBytesIntoBuffer(float *buffer, const LC_GL_TextSettings *gameText, const LC_GL_Text *text) {
     const char codePointOfFirstCharacter = gameText->codePointOfFirstCharacter;
     const char charsToIncludeInFontAtlas = gameText->charsToIncludeInFontAtlas;
     const float fontSize = gameText->fontSize;
     vec3 localPosition = { text->position[0], text->position[1], text->position[2] };
     uint32 bufferPosition = 0;
+    LC_String textObject;
+    LC_String_Initialize(&textObject, text->string);
 
-    for (size_t i = 0; i < text->string.length; i++) {
-        const char ch = text->string.data[i];
+    for (size_t i = 0; i < textObject.length; i++) {
+        const char ch = textObject.data[i];
 
         if (ch < codePointOfFirstCharacter || ch > codePointOfFirstCharacter + charsToIncludeInFontAtlas) {
             SDL_Log("\nCharacter '%c' with code point %d is not included in the font atlas", ch, (int)ch);
@@ -450,7 +452,7 @@ void LC_GL_InsertTextBytesIntoBuffer(float *buffer, const LC_GL_GameText *gameTe
     }
 }
 
-void LC_GL_DeleteTextRenderer(const LC_GL_GameText *gameText) {
+void LC_GL_DeleteTextRenderer(const LC_GL_TextSettings *gameText) {
     glDeleteVertexArrays(1, &gameText->vao);
     glDeleteBuffers(1, &gameText->vbo);
     glDeleteTextures(1, &gameText->fontAtlasTextureId);
@@ -479,7 +481,7 @@ LC_Color LC_Color_Create(const float red, const float green, const float blue, c
 }
 
 void LC_GL_InitializeRenderer(LC_Arena *arena, LC_GL_Renderer *renderer, const int32 width, const int32 height) {
-    renderer->gameText = LC_Arena_Allocate(arena, sizeof(LC_GL_GameText));
+    renderer->gameText = LC_Arena_Allocate(arena, sizeof(LC_GL_TextSettings));
     renderer->screenWidth = width;
     renderer->screenHeight = height;
     renderer->defaultShader = LC_Arena_Allocate(arena, sizeof(LC_GL_Shader));

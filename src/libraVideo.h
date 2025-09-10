@@ -21,13 +21,13 @@ typedef struct shader_gl {
 
 // TEXT RENDERING
 typedef struct text {
-    LC_String string;
+    char *string;
     vec3 position;
     vec4 color;
     float scale;
 } LC_GL_Text;
 
-typedef struct gameText {
+typedef struct textSettings {
     GLuint vao;
     GLuint vbo;
     GLuint fontAtlasTextureId;
@@ -38,7 +38,7 @@ typedef struct gameText {
     char charsToIncludeInFontAtlas;
     stbtt_packedchar *packedChars;
     stbtt_aligned_quad *alignedQuads;
-} LC_GL_GameText;
+} LC_GL_TextSettings;
 
 // GAME CORE
 typedef struct color {
@@ -64,7 +64,7 @@ typedef struct renderer_gl {
     GLuint defaultVertexArrayObject;
     GLuint defaultVertexBufferObject;
     GLuint defaultElementBufferObject;
-    LC_GL_GameText *gameText;
+    LC_GL_TextSettings *gameText;
     GLint glMajorVersion;
     GLint glMinorVersion;
 } LC_GL_Renderer;
@@ -97,16 +97,16 @@ bool CheckCompileErrors(GLuint programId, char *type, char *buffer);
 
 bool LC_GL_InitializeTextRenderer(LC_Arena *arena, const LC_GL_Renderer *renderer, const char *fontName, float fontSize,
                                   char *errorLog);
-void LC_GL_CreateTextureTextDSA(LC_GL_GameText *gameText, int32 fontAtlasWidth, int32 fontAtlasHeight,
+void LC_GL_CreateTextureTextDSA(LC_GL_TextSettings *gameText, int32 fontAtlasWidth, int32 fontAtlasHeight,
                                 const uchar *fontAtlasBitmap);
-void LC_GL_CreateTextureTextNonDSA(LC_GL_GameText *gameText, int32 fontAtlasWidth, int32 fontAtlasHeight,
+void LC_GL_CreateTextureTextNonDSA(LC_GL_TextSettings *gameText, int32 fontAtlasWidth, int32 fontAtlasHeight,
                                    const uchar *fontAtlasBitmap);
-void LC_GL_SetupVaoAndVboTextDSA(LC_GL_GameText *gameText);
-void LC_GL_SetupVaoAndVboTextNonDSA(LC_GL_GameText *gameText);
+void LC_GL_SetupVaoAndVboTextDSA(LC_GL_TextSettings *gameText);
+void LC_GL_SetupVaoAndVboTextNonDSA(LC_GL_TextSettings *gameText);
 void LC_GL_RenderText(const LC_GL_Renderer *renderer, const LC_GL_Text *text);
 void LC_GL_RenderTextDSA(const LC_GL_Renderer *renderer, GLint totalVertices, GLuint sizeOfBuffer, const float *buffer);
 void LC_GL_RenderTextNonDSA(const LC_GL_Renderer *renderer, GLint totalVertices, GLuint sizeOfBuffer, const float *buffer);
-void LC_GL_InsertTextBytesIntoBuffer(float *buffer, const LC_GL_GameText *gameText,
+void LC_GL_InsertTextBytesIntoBuffer(float *buffer, const LC_GL_TextSettings *gameText,
                                      const LC_GL_Text *text);
 
 // ==================================================================================================================
