@@ -13,56 +13,100 @@
 static constexpr GLuint TEXT_STARTING_BUFFER_SIZE = 3600; // 4(sizeof(float)) * 100(Vertices) * 9 (Number of float per vertex)
 
 // ==================================================================================================================
+// Video Errors
+// ==================================================================================================================
+
+void GLClearError() {
+    while (glGetError() != GL_NO_ERROR);
+}
+
+bool GLLogCall(const char *function, const char *file, int line) {
+    GLenum error;
+    if ((error = glGetError())) {
+        char errorString[256];
+        switch (error) {
+            case 1280:
+                strncpy(errorString, "GL_INVALID_ENUM", 256);
+                break;
+            case 1281:
+                strncpy(errorString, "GL_INVALID_VALUE", 256);
+                break;
+            case 1282:
+                strncpy(errorString, "GL_INVALID_OPERATION", 256);
+                break;
+            case 1283:
+                strncpy(errorString, "GL_STACK_OVERFLOW", 256);
+                break;
+            case 1284:
+                strncpy(errorString, "GL_STACK_UNDERFLOW", 256);
+                break;
+            case 1285:
+                strncpy(errorString, "GL_OUT_OF_MEMORY", 256);
+                break;
+            case 1286:
+                strncpy(errorString, "GL_INVALID_FRAMEBUFFER_OPERATION", 256);
+                break;
+            default:
+                break;
+        }
+        SDL_LogError(SDL_LOG_CATEGORY_VIDEO, "[OpenGL Error] (%d): %s - %s - %s - Line: %d", error, errorString,
+                     function, file, line);
+        return false;
+    }
+    return true;
+}
+
+// ==================================================================================================================
 // SHADER
 // ==================================================================================================================
 
 void LC_GL_SetUniformBool(const GLuint programId, const char *name, const bool value) {
-    glUniform1i(glGetUniformLocation(programId, name), (int32)value);
+    GLCall(glUniform1i(glGetUniformLocation(programId, name), (int32)value));
 }
 
 void LC_GL_SetUniformInt(const GLuint programId, const char *name, const int32 value) {
-    glUniform1i(glGetUniformLocation(programId, name), value);
+    GLCall(glUniform1i(glGetUniformLocation(programId, name), value));
 }
 
 void LC_GL_SetUniformFloat(const GLuint programId, const char *name, const float value) {
-    glUniform1f(glGetUniformLocation(programId, name), value);
+    GLCall(glUniform1f(glGetUniformLocation(programId, name), value));
 }
 
 void LC_GL_SetUniformVec2(const GLuint programId, const char *name, const vec2 value) {
-    glUniform2fv(glGetUniformLocation(programId, name), 1, &value[0]);
+    GLCall(glUniform2fv(glGetUniformLocation(programId, name), 1, &value[0]));
 }
 
 void LC_GL_SetUniformVec2f(const GLuint programId, const char *name, const float x, const float y) {
-    glUniform2f(glGetUniformLocation(programId, name), x, y);
+    GLCall(glUniform2f(glGetUniformLocation(programId, name), x, y));
 }
 
 void LC_GL_SetUniformVec3(const GLuint programId, const char *name, const vec3 value) {
-    glUniform3fv(glGetUniformLocation(programId, name), 1, &value[0]);
+    GLCall(glUniform3fv(glGetUniformLocation(programId, name), 1, &value[0]));
 }
 
 void LC_GL_SetUniformVec3f(const GLuint programId, const char *name, const float x, const float y, const float z) {
-    glUniform3f(glGetUniformLocation(programId, name), x, y, z);
+    GLCall(glUniform3f(glGetUniformLocation(programId, name), x, y, z));
 }
 
 void LC_GL_SetUniformVec4(const GLuint programId, const char *name, const vec4 value) {
-    glUniform4fv(glGetUniformLocation(programId, name), 1, &value[0]);
+    GLCall(glUniform4fv(glGetUniformLocation(programId, name), 1, &value[0]));
 }
 
 void LC_GL_SetUniformVec4f(const GLuint programId, const char *name, const float x, const float y, const float z,
                            const float w) {
-    glUniform4f(glGetUniformLocation(programId, name), x, y, z, w);
+    GLCall(glUniform4f(glGetUniformLocation(programId, name), x, y, z, w));
 }
 
 void LC_GL_SetUniformMat2(const GLuint programId, const char *name, const mat2 *mat) {
-    glUniformMatrix2fv(glGetUniformLocation(programId, name), 1, GL_FALSE, mat[0][0]);
+    GLCall(glUniformMatrix2fv(glGetUniformLocation(programId, name), 1, GL_FALSE, mat[0][0]));
 }
 
 void LC_GL_SetUniformMat3(const GLuint programId, const char *name, const mat3 *mat) {
-    glUniformMatrix3fv(glGetUniformLocation(programId, name), 1, GL_FALSE, mat[0][0]);
+    GLCall(glUniformMatrix3fv(glGetUniformLocation(programId, name), 1, GL_FALSE, mat[0][0]));
 }
 
 void LC_GL_SetUniformMat4(const GLuint programId, const char *name, const mat4 *mat) {
-    glUniformMatrix4fv(glGetUniformLocation(programId, name), 1, GL_FALSE, mat[0][0]);
+    GLCall(glUniformMatrix4fv(glGetUniformLocation(programId, name), 1, GL_FALSE, mat[0][0]));
 }
 
 bool LC_GL_InitializeShader(LC_Arena *arena, LC_GL_Shader *shader, char *buffer) {
@@ -85,25 +129,25 @@ bool LC_GL_InitializeShader(LC_Arena *arena, LC_GL_Shader *shader, char *buffer)
 
     // Vertex Shader
     const uint32 vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, (char const* const *)&vertexShaderSource, nullptr);
-    glCompileShader(vertexShader);
+    GLCall(glShaderSource(vertexShader, 1, (char const* const *)&vertexShaderSource, nullptr));
+    GLCall(glCompileShader(vertexShader));
     if (!CheckCompileErrors(vertexShader, "VERTEX", buffer)) return false;
 
     // Fragment Shader
     const uint32 fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, (char const* const *)&fragmentShaderSource, nullptr);
-    glCompileShader(fragmentShader);
+    GLCall(glShaderSource(fragmentShader, 1, (char const* const *)&fragmentShaderSource, nullptr));
+    GLCall(glCompileShader(fragmentShader));
     if (!CheckCompileErrors(fragmentShader, "FRAGMENT", buffer)) return false;
 
     // Shader Program
     shader->programId = glCreateProgram();
-    glAttachShader(shader->programId, vertexShader);
-    glAttachShader(shader->programId, fragmentShader);
-    glLinkProgram(shader->programId);
+    GLCall(glAttachShader(shader->programId, vertexShader));
+    GLCall(glAttachShader(shader->programId, fragmentShader));
+    GLCall(glLinkProgram(shader->programId));
     if (!CheckCompileErrors(shader->programId, "PROGRAM", buffer)) return false;
 
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
+    GLCall(glDeleteShader(vertexShader));
+    GLCall(glDeleteShader(fragmentShader));
 
     LC_Arena_EndTemporary(localArena);
 
@@ -199,92 +243,92 @@ bool LC_GL_InitializeTextRenderer(LC_Arena *arena, const LC_GL_Renderer *rendere
 
 void LC_GL_CreateTextureTextDSA(LC_GL_TextSettings *gameText, const int32 fontAtlasWidth, const int32 fontAtlasHeight,
                                const uchar *fontAtlasBitmap) {
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    GLCall(glPixelStorei(GL_UNPACK_ALIGNMENT, 1));
 
-    glCreateTextures(GL_TEXTURE_2D, 1, &gameText->fontAtlasTextureId);
+    GLCall(glCreateTextures(GL_TEXTURE_2D, 1, &gameText->fontAtlasTextureId));
 
-    glTextureParameteri(gameText->fontAtlasTextureId, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTextureParameteri(gameText->fontAtlasTextureId, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    GLCall(glTextureParameteri(gameText->fontAtlasTextureId, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+    GLCall(glTextureParameteri(gameText->fontAtlasTextureId, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
     // set texture filtering parameters
-    glTextureParameteri(gameText->fontAtlasTextureId, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTextureParameteri(gameText->fontAtlasTextureId, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    GLCall(glTextureParameteri(gameText->fontAtlasTextureId, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+    GLCall(glTextureParameteri(gameText->fontAtlasTextureId, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
 
     // The given texture data is a single channel 1 byte per pixel data
-    glTextureStorage2D(gameText->fontAtlasTextureId, 1, GL_R8, fontAtlasWidth, fontAtlasHeight);
-    glTextureSubImage2D(gameText->fontAtlasTextureId, 0, 0, 0, fontAtlasWidth, fontAtlasHeight, GL_RED, GL_UNSIGNED_BYTE,
-                        fontAtlasBitmap);
+    GLCall(glTextureStorage2D(gameText->fontAtlasTextureId, 1, GL_R8, fontAtlasWidth, fontAtlasHeight));
+    GLCall(glTextureSubImage2D(gameText->fontAtlasTextureId, 0, 0, 0, fontAtlasWidth, fontAtlasHeight, GL_RED, GL_UNSIGNED_BYTE,
+                        fontAtlasBitmap));
 }
 
 void LC_GL_CreateTextureTextNonDSA(LC_GL_TextSettings *gameText, const int32 fontAtlasWidth, const int32 fontAtlasHeight,
                                const uchar *fontAtlasBitmap) {
-    glGenTextures(1, &gameText->fontAtlasTextureId);
-    glBindTexture(GL_TEXTURE_2D, gameText->fontAtlasTextureId);
+    GLCall(glGenTextures(1, &gameText->fontAtlasTextureId));
+    GLCall(glBindTexture(GL_TEXTURE_2D, gameText->fontAtlasTextureId));
 
     // The given texture data is a single channel 1 byte per pixel data
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, fontAtlasWidth, fontAtlasHeight, 0, GL_RED, GL_UNSIGNED_BYTE, fontAtlasBitmap);
+    GLCall(glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, fontAtlasWidth, fontAtlasHeight, 0, GL_RED, GL_UNSIGNED_BYTE, fontAtlasBitmap));
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+    GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+    GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+    GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
 
     // Unbind Texture
-    glBindTexture(GL_TEXTURE_2D, 0);
+    GLCall(glBindTexture(GL_TEXTURE_2D, 0));
 }
 
 void LC_GL_SetupVaoAndVboTextDSA(LC_GL_TextSettings *gameText) {
-    glCreateBuffers(1, &gameText->vbo);
-    glNamedBufferStorage(gameText->vbo, TEXT_STARTING_BUFFER_SIZE, nullptr, GL_DYNAMIC_STORAGE_BIT);
+    GLCall(glCreateBuffers(1, &gameText->vbo));
+    GLCall(glNamedBufferStorage(gameText->vbo, TEXT_STARTING_BUFFER_SIZE, nullptr, GL_DYNAMIC_STORAGE_BIT));
 
-    glCreateVertexArrays(1, &gameText->vao);
+    GLCall(glCreateVertexArrays(1, &gameText->vao));
     constexpr GLuint vaoBindingPoint = 0;
-    glVertexArrayVertexBuffer(gameText->vao, vaoBindingPoint, gameText->vbo, 0, 9 * sizeof(float));
+    GLCall(glVertexArrayVertexBuffer(gameText->vao, vaoBindingPoint, gameText->vbo, 0, 9 * sizeof(float)));
 
     constexpr uint8 positionIndex = 0;
     constexpr uint8 colorIndex = 1;
     constexpr uint8 texCoordIndex = 2;
 
-    glEnableVertexArrayAttrib(gameText->vao, positionIndex);
-    glEnableVertexArrayAttrib(gameText->vao, colorIndex);
-    glEnableVertexArrayAttrib(gameText->vao, texCoordIndex);
+    GLCall(glEnableVertexArrayAttrib(gameText->vao, positionIndex));
+    GLCall(glEnableVertexArrayAttrib(gameText->vao, colorIndex));
+    GLCall(glEnableVertexArrayAttrib(gameText->vao, texCoordIndex));
 
-    glVertexArrayAttribFormat(gameText->vao, positionIndex, 3, GL_FLOAT, GL_FALSE, 0);
-    glVertexArrayAttribFormat(gameText->vao, colorIndex, 4, GL_FLOAT, GL_FALSE, 3 * sizeof(float));
-    glVertexArrayAttribFormat(gameText->vao, texCoordIndex, 2, GL_FLOAT, GL_FALSE, 7 * sizeof(float));
+    GLCall(glVertexArrayAttribFormat(gameText->vao, positionIndex, 3, GL_FLOAT, GL_FALSE, 0));
+    GLCall(glVertexArrayAttribFormat(gameText->vao, colorIndex, 4, GL_FLOAT, GL_FALSE, 3 * sizeof(float)));
+    GLCall(glVertexArrayAttribFormat(gameText->vao, texCoordIndex, 2, GL_FLOAT, GL_FALSE, 7 * sizeof(float)));
 
-    glVertexArrayAttribBinding(gameText->vao, positionIndex, vaoBindingPoint);
-    glVertexArrayAttribBinding(gameText->vao, colorIndex, vaoBindingPoint);
-    glVertexArrayAttribBinding(gameText->vao, texCoordIndex, vaoBindingPoint);
+    GLCall(glVertexArrayAttribBinding(gameText->vao, positionIndex, vaoBindingPoint));
+    GLCall(glVertexArrayAttribBinding(gameText->vao, colorIndex, vaoBindingPoint));
+    GLCall(glVertexArrayAttribBinding(gameText->vao, texCoordIndex, vaoBindingPoint));
 }
 
 void LC_GL_SetupVaoAndVboTextNonDSA(LC_GL_TextSettings *gameText) {
     // Setting up the VAO and VBO
-    glGenBuffers(1, &gameText->vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, gameText->vbo);
-    glBufferData(GL_ARRAY_BUFFER, TEXT_STARTING_BUFFER_SIZE, nullptr, GL_DYNAMIC_DRAW);
+    GLCall(glGenBuffers(1, &gameText->vbo));
+    GLCall(glBindBuffer(GL_ARRAY_BUFFER, gameText->vbo));
+    GLCall(glBufferData(GL_ARRAY_BUFFER, TEXT_STARTING_BUFFER_SIZE, nullptr, GL_DYNAMIC_DRAW));
 
-    glGenVertexArrays(1, &gameText->vao);
-    glBindVertexArray(gameText->vao);
+    GLCall(glGenVertexArrays(1, &gameText->vao));
+    GLCall(glBindVertexArray(gameText->vao));
 
     constexpr uint8 positionIndex = 0;
     constexpr uint8 colorIndex = 1;
     constexpr uint8 texCoordIndex = 2;
 
     // position attribute
-    glVertexAttribPointer(positionIndex, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), nullptr);
-    glEnableVertexAttribArray(positionIndex);
+    GLCall(glVertexAttribPointer(positionIndex, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), nullptr));
+    GLCall(glEnableVertexAttribArray(positionIndex));
 
     // color attribute
-    glVertexAttribPointer(colorIndex, 4, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void *)(3 * sizeof(float)));
-    glEnableVertexAttribArray(colorIndex);
+    GLCall(glVertexAttribPointer(colorIndex, 4, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void *)(3 * sizeof(float))));
+    GLCall(glEnableVertexAttribArray(colorIndex));
 
     // texCoord attribute
-    glVertexAttribPointer(texCoordIndex, 2, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void *)(7 * sizeof(float)));
-    glEnableVertexAttribArray(texCoordIndex);
+    GLCall(glVertexAttribPointer(texCoordIndex, 2, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void *)(7 * sizeof(float))));
+    GLCall(glEnableVertexAttribArray(texCoordIndex));
 
     // Unbind VAO and VBO
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
+    GLCall(glBindBuffer(GL_ARRAY_BUFFER, 0));
+    GLCall(glBindVertexArray(0));
 }
 
 void LC_GL_RenderText(const LC_GL_Renderer *renderer, const LC_GL_Text *text) {
@@ -304,19 +348,19 @@ void LC_GL_RenderText(const LC_GL_Renderer *renderer, const LC_GL_Text *text) {
 
     LC_GL_InsertTextBytesIntoBuffer(buffer, renderer->gameText, text);
     
-    glEnable(GL_CULL_FACE);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    GLCall(glEnable(GL_CULL_FACE));
+    GLCall(glEnable(GL_BLEND));
+    GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 
-    glUseProgram(fontShaderProgramId);
+    GLCall(glUseProgram(fontShaderProgramId));
 
     LC_GL_IsDSAAvailable(renderer) ? LC_GL_RenderTextDSA(renderer, totalVertices, sizeOfBuffer, buffer) :
         LC_GL_RenderTextNonDSA(renderer, totalVertices, sizeOfBuffer, buffer);
 
-    glDisable(GL_CULL_FACE);
-    glDisable(GL_BLEND);
+    GLCall(glDisable(GL_CULL_FACE));
+    GLCall(glDisable(GL_BLEND));
 
-    glUseProgram(0);
+    GLCall(glUseProgram(0));
 }
 
 void LC_GL_RenderTextDSA(const LC_GL_Renderer *renderer, const GLint totalVertices, const GLuint sizeOfBuffer, const float *buffer) {
@@ -327,39 +371,39 @@ void LC_GL_RenderTextDSA(const LC_GL_Renderer *renderer, const GLint totalVertic
                          &renderer->viewProjectionMatrix);
 
     // Bind the Texture Unit
-    glBindTextureUnit(0, renderer->gameText->fontAtlasTextureId);
+    GLCall(glBindTextureUnit(0, renderer->gameText->fontAtlasTextureId));
 
     // Render here
-    glBindVertexArray(renderer->gameText->vao);
-    glNamedBufferSubData(renderer->gameText->vbo, 0, sizeOfBuffer, buffer);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, totalVertices);
+    GLCall(glBindVertexArray(renderer->gameText->vao));
+    GLCall(glNamedBufferSubData(renderer->gameText->vbo, 0, sizeOfBuffer, buffer));
+    GLCall(glDrawArrays(GL_TRIANGLE_STRIP, 0, totalVertices));
 
     // Unbind the Texture Unit
-    glBindTextureUnit(0, 0);
+    GLCall(glBindTextureUnit(0, 0));
 
     // Unbind Vertex Array
-    glBindVertexArray(0);
+    GLCall(glBindVertexArray(0));
 }
 
 void LC_GL_RenderTextNonDSA(const LC_GL_Renderer *renderer, const GLint totalVertices, const GLuint sizeOfBuffer, const float *buffer) {
     const GLuint fontShaderProgramId = renderer->gameText->fontShader->programId;
 
     // Bind the Texture
-    glBindTexture(GL_TEXTURE_2D, renderer->gameText->fontAtlasTextureId);
-    glActiveTexture(GL_TEXTURE0);
+    GLCall(glBindTexture(GL_TEXTURE_2D, renderer->gameText->fontAtlasTextureId));
+    GLCall(glActiveTexture(GL_TEXTURE0));
 
     LC_GL_SetUniformInt(fontShaderProgramId, "fontAtlasTexture", 0);
     LC_GL_SetUniformMat4(fontShaderProgramId, "viewProjectionMatrix",
                          &renderer->viewProjectionMatrix);
     // Render here
-    glBindVertexArray(renderer->gameText->vao);
-    glBindBuffer(GL_ARRAY_BUFFER, renderer->gameText->vbo);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeOfBuffer, buffer);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, totalVertices);
+    GLCall(glBindVertexArray(renderer->gameText->vao));
+    GLCall(glBindBuffer(GL_ARRAY_BUFFER, renderer->gameText->vbo));
+    GLCall(glBufferSubData(GL_ARRAY_BUFFER, 0, sizeOfBuffer, buffer));
+    GLCall(glDrawArrays(GL_TRIANGLE_STRIP, 0, totalVertices));
 
     // Unbind VAO and VBO
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
+    GLCall(glBindBuffer(GL_ARRAY_BUFFER, 0));
+    GLCall(glBindVertexArray(0));
 }
 
 void LC_GL_InsertTextBytesIntoBuffer(float *buffer, const LC_GL_TextSettings *gameText, const LC_GL_Text *text) {
@@ -453,10 +497,10 @@ void LC_GL_InsertTextBytesIntoBuffer(float *buffer, const LC_GL_TextSettings *ga
 }
 
 void LC_GL_DeleteTextRenderer(const LC_GL_TextSettings *gameText) {
-    glDeleteVertexArrays(1, &gameText->vao);
-    glDeleteBuffers(1, &gameText->vbo);
-    glDeleteTextures(1, &gameText->fontAtlasTextureId);
-    glDeleteProgram(gameText->fontShader->programId);
+    GLCall(glDeleteVertexArrays(1, &gameText->vao));
+    GLCall(glDeleteBuffers(1, &gameText->vbo));
+    GLCall(glDeleteTextures(1, &gameText->fontAtlasTextureId));
+    GLCall(glDeleteProgram(gameText->fontShader->programId));
 }
 
 // ==================================================================================================================
@@ -535,10 +579,10 @@ int32 LC_GL_InitializeVideo(LC_Arena *arena, LC_GL_Renderer *renderer, const cha
 #endif
 
     // Set the actual OpenGL version
-    glGetIntegerv(GL_MAJOR_VERSION, &renderer->glMajorVersion);
-    glGetIntegerv(GL_MINOR_VERSION, &renderer->glMinorVersion);
+    GLCall(glGetIntegerv(GL_MAJOR_VERSION, &renderer->glMajorVersion));
+    GLCall(glGetIntegerv(GL_MINOR_VERSION, &renderer->glMinorVersion));
 
-    glViewport(0, 0, renderer->screenWidth, renderer->screenHeight);
+    GLCall(glViewport(0, 0, renderer->screenWidth, renderer->screenHeight));
 
     // Setup Orthographic projection
     glm_ortho(0.0f, (float)renderer->screenWidth, (float)renderer->screenHeight, 0.0f, -1.0f, 1.0f,
@@ -610,58 +654,58 @@ void LC_GL_SetupDefaultRectRenderer(LC_Arena *arena, LC_GL_Renderer *renderer, c
 
     if (!LC_GL_IsDSAAvailable(renderer)) {
         // Create the Vertex Buffer Object to store the vertex data
-        glGenVertexArrays(1, &renderer->defaultVertexArrayObject);
-        glGenBuffers(1, &renderer->defaultVertexBufferObject);
-        glGenBuffers(1, &renderer->defaultElementBufferObject);
+        GLCall(glGenVertexArrays(1, &renderer->defaultVertexArrayObject));
+        GLCall(glGenBuffers(1, &renderer->defaultVertexBufferObject));
+        GLCall(glGenBuffers(1, &renderer->defaultElementBufferObject));
         // 1. Bind Vertex Array Object first before binding and configuring Vertex Buffer Object
-        glBindVertexArray(renderer->defaultVertexArrayObject);
+        GLCall(glBindVertexArray(renderer->defaultVertexArrayObject));
 
         // We bind the buffer object using the buffer type for the Vertex Buffer Object
-        glBindBuffer(GL_ARRAY_BUFFER, renderer->defaultVertexBufferObject);
+        GLCall(glBindBuffer(GL_ARRAY_BUFFER, renderer->defaultVertexBufferObject));
 
         // Copy the vertex data into the buffer's memory
         // With GL_STREAM_DRAW the data is set only once and used by the GPU at most a few times.
         // With GL_STATIC_DRAW the data is set only once and used many times
         // With GL_DYNAMIC_DRAW the data is changed a lot and used many times.
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+        GLCall(glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW));
 
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer->defaultElementBufferObject);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+        GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, renderer->defaultElementBufferObject));
+        GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW));
 
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), nullptr);
-        glEnableVertexAttribArray(0);
+        GLCall(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), nullptr));
+        GLCall(glEnableVertexAttribArray(0));
 
-        glBindVertexArray(0);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        GLCall(glBindVertexArray(0));
+        GLCall(glBindBuffer(GL_ARRAY_BUFFER, 0));
+        GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
 
         return;
     }
 
-    glCreateBuffers(1, &renderer->defaultVertexBufferObject);
-    glNamedBufferStorage(renderer->defaultVertexBufferObject, sizeof(vertices), vertices, 0);
+    GLCall(glCreateBuffers(1, &renderer->defaultVertexBufferObject));
+    GLCall(glNamedBufferStorage(renderer->defaultVertexBufferObject, sizeof(vertices), vertices, 0));
 
-    glCreateBuffers(1, &renderer->defaultElementBufferObject);
-    glNamedBufferStorage(renderer->defaultElementBufferObject, sizeof(indices), indices, 0);
+    GLCall(glCreateBuffers(1, &renderer->defaultElementBufferObject));
+    GLCall(glNamedBufferStorage(renderer->defaultElementBufferObject, sizeof(indices), indices, 0));
 
-    glCreateVertexArrays(1, &renderer->defaultVertexArrayObject);
+    GLCall(glCreateVertexArrays(1, &renderer->defaultVertexArrayObject));
     constexpr GLuint vaoBindingPoint = 0;
-    glVertexArrayVertexBuffer(renderer->defaultVertexArrayObject, vaoBindingPoint, 
-                              renderer->defaultVertexBufferObject, 0, 2 * sizeof(float));
-    glVertexArrayElementBuffer(renderer->defaultVertexArrayObject, renderer->defaultElementBufferObject);
+    GLCall(glVertexArrayVertexBuffer(renderer->defaultVertexArrayObject, vaoBindingPoint, 
+                              renderer->defaultVertexBufferObject, 0, 2 * sizeof(float)));
+    GLCall(glVertexArrayElementBuffer(renderer->defaultVertexArrayObject, renderer->defaultElementBufferObject));
 
     constexpr uint8 positionIndex = 0;
 
-    glEnableVertexArrayAttrib(renderer->defaultVertexArrayObject, positionIndex);
+    GLCall(glEnableVertexArrayAttrib(renderer->defaultVertexArrayObject, positionIndex));
 
-    glVertexArrayAttribFormat(renderer->defaultVertexArrayObject, positionIndex, 2, GL_FLOAT, GL_FALSE, 0);
+    GLCall(glVertexArrayAttribFormat(renderer->defaultVertexArrayObject, positionIndex, 2, GL_FLOAT, GL_FALSE, 0));
 
-    glVertexArrayAttribBinding(renderer->defaultVertexArrayObject, positionIndex, vaoBindingPoint);
+    GLCall(glVertexArrayAttribBinding(renderer->defaultVertexArrayObject, positionIndex, vaoBindingPoint));
 }
 
 void LC_GL_ClearBackground(const LC_Color color) {
-    glClearColor(color.r/255.0f, color.b/255.0f, color.g/255.0f, color.a);
-    glClear(GL_COLOR_BUFFER_BIT);
+    GLCall(glClearColor(color.r/255.0f, color.b/255.0f, color.g/255.0f, color.a));
+    GLCall(glClear(GL_COLOR_BUFFER_BIT));
 }
 
 void LC_GL_RenderRectangle(const LC_GL_Renderer *renderer, const LC_Rect *rect, const LC_Color *color) {
@@ -674,29 +718,29 @@ void LC_GL_RenderRectangle(const LC_GL_Renderer *renderer, const LC_Rect *rect, 
     const GLuint defaultShaderProgramId = renderer->defaultShader->programId;
     if (!LC_GL_IsDSAAvailable(renderer)) {
         // Setup Before Render
-        glUseProgram(defaultShaderProgramId);
+        GLCall(glUseProgram(defaultShaderProgramId));
         LC_GL_SetUniformVec4(defaultShaderProgramId, "aColor", aColor);
         LC_GL_SetUniformMat4(defaultShaderProgramId, "model", &model);
-        glBindVertexArray(renderer->defaultVertexArrayObject);
+        GLCall(glBindVertexArray(renderer->defaultVertexArrayObject));
 
         // Render
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+        GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
 
         // Unbind VAO and VBO
-        glBindVertexArray(0);
+        GLCall(glBindVertexArray(0));
         return;
     }
     // Setup Before Render
-    glUseProgram(defaultShaderProgramId);
+    GLCall(glUseProgram(defaultShaderProgramId));
     LC_GL_SetUniformVec4(defaultShaderProgramId, "aColor", aColor);
     LC_GL_SetUniformMat4(defaultShaderProgramId, "model", &model);
-    glBindVertexArray(renderer->defaultVertexArrayObject);
+    GLCall(glBindVertexArray(renderer->defaultVertexArrayObject));
 
     // Render
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+    GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
 
     // Unbind VAO
-    glBindVertexArray(0);
+    GLCall(glBindVertexArray(0));
 }
 
 bool LC_GL_SwapBuffer(SDL_Window *window, char *errorLog) {
@@ -709,9 +753,9 @@ bool LC_GL_SwapBuffer(SDL_Window *window, char *errorLog) {
 
 void LC_GL_FreeResources(const LC_GL_Renderer *renderer) {
     LC_GL_DeleteTextRenderer(renderer->gameText);
-    glDeleteBuffers(1, &renderer->defaultVertexBufferObject);
-    glDeleteBuffers(1, &renderer->defaultElementBufferObject);
-    glDeleteVertexArrays(1, &renderer->defaultVertexArrayObject);
+    GLCall(glDeleteBuffers(1, &renderer->defaultVertexBufferObject));
+    GLCall(glDeleteBuffers(1, &renderer->defaultElementBufferObject));
+    GLCall(glDeleteVertexArrays(1, &renderer->defaultVertexArrayObject));
     SDL_GLContext glContext = SDL_GL_GetCurrentContext();
 
     SDL_GL_DestroyContext(glContext);
@@ -720,6 +764,3 @@ void LC_GL_FreeResources(const LC_GL_Renderer *renderer) {
     SDL_QuitSubSystem(SDL_INIT_VIDEO);
 }
 
-// ==================================================================================================================
-// Video Errors
-// ==================================================================================================================
