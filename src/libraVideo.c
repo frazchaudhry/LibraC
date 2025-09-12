@@ -2,6 +2,7 @@
 // Created by Fraz Mahmud on 5/14/2025.
 //
 
+#include "glad/glad.h"
 #include <libraVideo.h>
 
 #define STB_TRUETYPE_IMPLEMENTATION
@@ -109,7 +110,7 @@ void LC_GL_SetUniformMat4(const GLuint programId, const char *name, const mat4 *
     GLCall(glUniformMatrix4fv(glGetUniformLocation(programId, name), 1, GL_FALSE, mat[0][0]));
 }
 
-bool LC_GL_InitializeShader(LC_Arena *arena, LC_GL_Shader *shader, char *buffer) {
+bool LC_GL_InitializeShader(LC_Arena *arena, LC_GL_Shader *shader, char *errorLog) {
     const TemporaryArenaMemory localArena = LC_Arena_BeginTemporaryMemory(arena);
 
     char *vertexShaderSource = nullptr;
@@ -118,12 +119,12 @@ bool LC_GL_InitializeShader(LC_Arena *arena, LC_GL_Shader *shader, char *buffer)
     LC_GetFileContentString(localArena.arena, shader->fragmentShaderPath->data, &fragmentShaderSource);
 
     if (!vertexShaderSource) {
-        snprintf(buffer, 1024, "ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ: vertex-shader");
+        snprintf(errorLog, 1024, "ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ: vertex-shader");
         return false;
     }
     if (!fragmentShaderSource) {
         free(vertexShaderSource);
-        snprintf(buffer, 1024, "ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ: fragment-shader");
+        snprintf(errorLog, 1024, "ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ: fragment-shader");
         return false;
     }
 
@@ -131,20 +132,20 @@ bool LC_GL_InitializeShader(LC_Arena *arena, LC_GL_Shader *shader, char *buffer)
     const uint32 vertexShader = glCreateShader(GL_VERTEX_SHADER);
     GLCall(glShaderSource(vertexShader, 1, (char const* const *)&vertexShaderSource, nullptr));
     GLCall(glCompileShader(vertexShader));
-    if (!CheckCompileErrors(vertexShader, "VERTEX", buffer)) return false;
+    if (!CheckCompileErrors(vertexShader, "VERTEX", errorLog)) return false;
 
     // Fragment Shader
     const uint32 fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
     GLCall(glShaderSource(fragmentShader, 1, (char const* const *)&fragmentShaderSource, nullptr));
     GLCall(glCompileShader(fragmentShader));
-    if (!CheckCompileErrors(fragmentShader, "FRAGMENT", buffer)) return false;
+    if (!CheckCompileErrors(fragmentShader, "FRAGMENT", errorLog)) return false;
 
     // Shader Program
     shader->programId = glCreateProgram();
     GLCall(glAttachShader(shader->programId, vertexShader));
     GLCall(glAttachShader(shader->programId, fragmentShader));
     GLCall(glLinkProgram(shader->programId));
-    if (!CheckCompileErrors(shader->programId, "PROGRAM", buffer)) return false;
+    if (!CheckCompileErrors(shader->programId, "PROGRAM", errorLog)) return false;
 
     GLCall(glDeleteShader(vertexShader));
     GLCall(glDeleteShader(fragmentShader));
@@ -708,7 +709,8 @@ void LC_GL_ClearBackground(const LC_Color color) {
     GLCall(glClear(GL_COLOR_BUFFER_BIT));
 }
 
-void LC_GL_RenderRectangle(const LC_GL_Renderer *renderer, const LC_Rect *rect, const LC_Color *color) {
+void LC_GL_RenderRectangle(const LC_GL_Renderer *renderer, const LC_Rect *rect, const LC_Color *color,
+                           const bool isWireframe) {
     const vec4 aColor = { color->r, color->g, color->b, color->a };
     mat4 model = GLM_MAT4_IDENTITY_INIT;
     vec3 translate = { (float)rect->x, (float)rect->y, 0.0f };
@@ -716,20 +718,7 @@ void LC_GL_RenderRectangle(const LC_GL_Renderer *renderer, const LC_Rect *rect, 
     vec3 scale = { (float)rect->w, (float)rect->h, 1.0f };
     glm_scale(model, scale);
     const GLuint defaultShaderProgramId = renderer->defaultShader->programId;
-    if (!LC_GL_IsDSAAvailable(renderer)) {
-        // Setup Before Render
-        GLCall(glUseProgram(defaultShaderProgramId));
-        LC_GL_SetUniformVec4(defaultShaderProgramId, "aColor", aColor);
-        LC_GL_SetUniformMat4(defaultShaderProgramId, "model", &model);
-        GLCall(glBindVertexArray(renderer->defaultVertexArrayObject));
 
-        // Render
-        GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
-
-        // Unbind VAO and VBO
-        GLCall(glBindVertexArray(0));
-        return;
-    }
     // Setup Before Render
     GLCall(glUseProgram(defaultShaderProgramId));
     LC_GL_SetUniformVec4(defaultShaderProgramId, "aColor", aColor);
@@ -737,7 +726,11 @@ void LC_GL_RenderRectangle(const LC_GL_Renderer *renderer, const LC_Rect *rect, 
     GLCall(glBindVertexArray(renderer->defaultVertexArrayObject));
 
     // Render
-    GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
+    if (isWireframe) {
+        GLCall(glDrawArrays(GL_LINE_LOOP, 0, 4));
+    } else {
+        GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
+    }
 
     // Unbind VAO
     GLCall(glBindVertexArray(0));

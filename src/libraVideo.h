@@ -78,7 +78,7 @@ typedef struct renderer_gl {
 
 // =============================================SHADER===============================================================
 
-bool LC_GL_InitializeShader(LC_Arena *arena, LC_GL_Shader *shader, char *buffer);
+bool LC_GL_InitializeShader(LC_Arena *arena, LC_GL_Shader *shader, char *errorLog);
 
 void LC_GL_SetUniformBool(GLuint programId, const char *name, bool value);
 void LC_GL_SetUniformInt(GLuint programId, const char *name, int32 value);
@@ -129,7 +129,7 @@ void LC_GL_GetOpenGLVersionInfo();
 bool LC_GL_IsDSAAvailable(const LC_GL_Renderer *renderer);
 void LC_GL_SetupDefaultRectRenderer(LC_Arena *arena, LC_GL_Renderer *renderer, char *errorLog);
 void LC_GL_ClearBackground(LC_Color color);
-void LC_GL_RenderRectangle(const LC_GL_Renderer *renderer, const LC_Rect *rect, const LC_Color *color);
+void LC_GL_RenderRectangle(const LC_GL_Renderer *renderer, const LC_Rect *rect, const LC_Color *color, bool isWireframe);
 bool LC_GL_SwapBuffer(SDL_Window *window, char *errorLog);
 void LC_GL_FreeResources(const LC_GL_Renderer *renderer);
 
