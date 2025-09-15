@@ -720,6 +720,9 @@ void LC_GL_RenderRectangle(const LC_GL_Renderer *renderer, const LC_Rect *rect, 
     const GLuint defaultShaderProgramId = renderer->defaultShader->programId;
 
     // Setup Before Render
+    GLCall(glEnable(GL_BLEND));
+    GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+
     GLCall(glUseProgram(defaultShaderProgramId));
     LC_GL_SetUniformVec4(defaultShaderProgramId, "aColor", aColor);
     LC_GL_SetUniformMat4(defaultShaderProgramId, "model", &model);
@@ -734,6 +737,7 @@ void LC_GL_RenderRectangle(const LC_GL_Renderer *renderer, const LC_Rect *rect, 
 
     // Unbind VAO
     GLCall(glBindVertexArray(0));
+    GLCall(glDisable(GL_BLEND));
 }
 
 bool LC_GL_SwapBuffer(SDL_Window *window, char *errorLog) {
