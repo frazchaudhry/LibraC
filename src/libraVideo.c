@@ -2,7 +2,6 @@
 // Created by Fraz Mahmud on 5/14/2025.
 //
 
-#include "glad/glad.h"
 #include <libraVideo.h>
 
 #define STB_TRUETYPE_IMPLEMENTATION
@@ -523,6 +522,14 @@ LC_Color LC_Color_Create(const float red, const float green, const float blue, c
         .a = alpha
     };
     return color;
+}
+
+bool LC_Rect_CheckCollisionAABB(const LC_Rect *a, const LC_Rect *b) {
+        return 
+            a->x < b->x + b->w &&
+            a->x + a->w > b->x &&
+            a->y < b->y + b->h &&
+            a->y + a->h > b->y;
 }
 
 void LC_GL_InitializeRenderer(LC_Arena *arena, LC_GL_Renderer *renderer, const int32 width, const int32 height) {

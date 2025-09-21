@@ -121,6 +121,8 @@ void LC_GL_InsertTextBytesIntoBuffer(float *buffer, const LC_GL_TextSettings *ga
 void LC_Color_Initialize(float red, float green, float blue, float alpha, LC_Color *color);
 LC_Color LC_Color_Create(float red, float green, float blue, float alpha);
 
+bool LC_Rect_CheckCollisionAABB(const LC_Rect *a, const LC_Rect *b);
+
 void LC_GL_InitializeRenderer(LC_Arena *arena, LC_GL_Renderer *renderer, int32 width, int32 height);
 int32 LC_GL_InitializeVideo(LC_Arena *arena, LC_GL_Renderer *renderer, const char *title, 
                             const char *fontName, char *errorLog);
