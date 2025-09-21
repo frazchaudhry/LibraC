@@ -48,8 +48,8 @@ typedef struct textSettings {
 // GAME CORE
 typedef struct color {
     float r;    // Value between 0.0f and 255.0f
-    float b;    // Value between 0.0f and 255.0f
     float g;    // Value between 0.0f and 255.0f
+    float b;    // Value between 0.0f and 255.0f
     float a;    // Value between 0.0f and 1.0f
 } LC_Color;
 
