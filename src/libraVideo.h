@@ -60,6 +60,13 @@ typedef struct {
     int32 h;
 } LC_Rect;
 
+typedef struct {
+    float x;
+    float y;
+    float w;
+    float h;
+} LC_FRect;
+
 typedef struct renderer_gl {
     int32 screenWidth;
     int32 screenHeight;
@@ -122,6 +129,7 @@ void LC_Color_Initialize(float red, float green, float blue, float alpha, LC_Col
 LC_Color LC_Color_Create(float red, float green, float blue, float alpha);
 
 bool LC_Rect_CheckCollisionAABB(const LC_Rect *a, const LC_Rect *b);
+bool LC_FRect_CheckCollisionAABB(const LC_FRect *a, const LC_FRect *b);
 
 void LC_GL_InitializeRenderer(LC_Arena *arena, LC_GL_Renderer *renderer, int32 width, int32 height);
 int32 LC_GL_InitializeVideo(LC_Arena *arena, LC_GL_Renderer *renderer, const char *title, 
@@ -131,7 +139,7 @@ void LC_GL_GetOpenGLVersionInfo();
 bool LC_GL_IsDSAAvailable(const LC_GL_Renderer *renderer);
 void LC_GL_SetupDefaultRectRenderer(LC_Arena *arena, LC_GL_Renderer *renderer, char *errorLog);
 void LC_GL_ClearBackground(LC_Color color);
-void LC_GL_RenderRectangle(const LC_GL_Renderer *renderer, const LC_Rect *rect, const LC_Color *color, bool isWireframe);
+void LC_GL_RenderRectangle(const LC_GL_Renderer *renderer, const LC_FRect *rect, const LC_Color *color, bool isWireframe);
 bool LC_GL_SwapBuffer(SDL_Window *window, char *errorLog);
 void LC_GL_FreeResources(const LC_GL_Renderer *renderer);
 

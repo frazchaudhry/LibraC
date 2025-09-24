@@ -532,6 +532,14 @@ bool LC_Rect_CheckCollisionAABB(const LC_Rect *a, const LC_Rect *b) {
             a->y + a->h > b->y;
 }
 
+bool LC_FRect_CheckCollisionAABB(const LC_FRect *a, const LC_FRect *b) {
+        return 
+            a->x < b->x + b->w &&
+            a->x + a->w > b->x &&
+            a->y < b->y + b->h &&
+            a->y + a->h > b->y;
+}
+
 void LC_GL_InitializeRenderer(LC_Arena *arena, LC_GL_Renderer *renderer, const int32 width, const int32 height) {
     renderer->gameText = LC_Arena_Allocate(arena, sizeof(LC_GL_TextSettings));
     renderer->screenWidth = width;
@@ -716,13 +724,13 @@ void LC_GL_ClearBackground(const LC_Color color) {
     GLCall(glClear(GL_COLOR_BUFFER_BIT));
 }
 
-void LC_GL_RenderRectangle(const LC_GL_Renderer *renderer, const LC_Rect *rect, const LC_Color *color,
+void LC_GL_RenderRectangle(const LC_GL_Renderer *renderer, const LC_FRect *rect, const LC_Color *color,
                            const bool isWireframe) {
     const vec4 aColor = { color->r, color->g, color->b, color->a };
     mat4 model = GLM_MAT4_IDENTITY_INIT;
-    vec3 translate = { (float)rect->x, (float)rect->y, 0.0f };
+    vec3 translate = { rect->x, rect->y, 0.0f };
     glm_translate(model, translate);
-    vec3 scale = { (float)rect->w, (float)rect->h, 1.0f };
+    vec3 scale = { rect->w, rect->h, 1.0f };
     glm_scale(model, scale);
     const GLuint defaultShaderProgramId = renderer->defaultShader->programId;
 
