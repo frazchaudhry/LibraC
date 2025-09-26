@@ -744,11 +744,8 @@ void LC_GL_RenderRectangle(const LC_GL_Renderer *renderer, const LC_FRect *rect,
     GLCall(glBindVertexArray(renderer->defaultVertexArrayObject));
 
     // Render
-    if (isWireframe) {
-        GLCall(glDrawArrays(GL_LINE_LOOP, 0, 4));
-    } else {
-        GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
-    }
+    if (isWireframe) GLCall(glDrawArrays(GL_LINE_LOOP, 0, 4));
+    else GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
 
     // Unbind VAO
     GLCall(glBindVertexArray(0));
