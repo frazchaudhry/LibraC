@@ -11,9 +11,12 @@
 #include "libraCore.h"
 
 #define LC_GL_ASSERT(x) if (!(x)) debug_break();
-#define GLCall(x) GLClearError(); \
+#define GLCall(x) \
+do { \
+    GLClearError(); \
     x; \
-    LC_GL_ASSERT(GLLogCall(#x, __FILE__, __LINE__))
+    LC_GL_ASSERT(GLLogCall(#x, __FILE__, __LINE__)) \
+} while(0)
 
 // =============================================STRUCTS==============================================================
 
