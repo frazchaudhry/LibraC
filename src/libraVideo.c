@@ -406,7 +406,7 @@ void LC_GL_RenderTextNonDSA(const LC_GL_Renderer *renderer, const GLint totalVer
     GLCall(glBindVertexArray(0));
 }
 
-void LC_GL_InsertTextBytesIntoBuffer(float *buffer, const LC_GL_TextSettings *gameText, const LC_GL_Text *text) {
+void LC_GL_InsertTextBytesIntoBuffer(float *buffer, const LC_GL_TextSettings *gameText, LC_GL_Text *text) {
     const char codePointOfFirstCharacter = gameText->codePointOfFirstCharacter;
     const char charsToIncludeInFontAtlas = gameText->charsToIncludeInFontAtlas;
     const float fontSize = gameText->fontSize;
@@ -414,6 +414,8 @@ void LC_GL_InsertTextBytesIntoBuffer(float *buffer, const LC_GL_TextSettings *ga
     uint32 bufferPosition = 0;
     LC_String textObject;
     LC_String_Initialize(&textObject, text->string);
+    float textWidth = 0.0f;
+    int32 textHeight = 0;
 
     for (size_t i = 0; i < textObject.length; i++) {
         const char ch = textObject.data[i];
@@ -425,7 +427,7 @@ void LC_GL_InsertTextBytesIntoBuffer(float *buffer, const LC_GL_TextSettings *ga
         // Handle newlines separately.
         if (ch == '\n') {
             // advance y by fontSize, reset x-coordinate
-            localPosition[1] -= fontSize * text->scale;
+            localPosition[1] += fontSize * text->scale;
             localPosition[0] = text->position[0];
             continue;
         }
@@ -435,6 +437,9 @@ void LC_GL_InsertTextBytesIntoBuffer(float *buffer, const LC_GL_TextSettings *ga
 
         const uint8 characterWidth = packedChar->x1 - packedChar->x0;
         const uint8 characterHeight = packedChar->y1 - packedChar->y0;
+
+        textWidth += packedChar->xadvance * text->scale;
+        if (characterHeight > textHeight) textHeight = characterHeight;
 
         // Handle spaces by skipping them.
         if (ch == ' ') {
@@ -494,6 +499,8 @@ void LC_GL_InsertTextBytesIntoBuffer(float *buffer, const LC_GL_TextSettings *ga
         // Update the position to render the next glyph specified by packedChar->xadvance.
         localPosition[0] += packedChar->xadvance * text->scale;
     }
+    text->width = (int32)ceilf(textWidth);
+    text->height = textHeight;
 }
 
 void LC_GL_DeleteTextRenderer(const LC_GL_TextSettings *gameText) {

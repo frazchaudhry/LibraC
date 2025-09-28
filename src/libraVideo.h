@@ -33,6 +33,8 @@ typedef struct text {
     vec3 position;
     vec4 color;
     float scale;
+    int32 width;
+    int32 height;
 } LC_GL_Text;
 
 typedef struct textSettings {
@@ -121,8 +123,7 @@ void LC_GL_SetupVaoAndVboTextNonDSA(LC_GL_TextSettings *gameText);
 void LC_GL_RenderText(const LC_GL_Renderer *renderer, const LC_GL_Text *text);
 void LC_GL_RenderTextDSA(const LC_GL_Renderer *renderer, GLint totalVertices, GLuint sizeOfBuffer, const float *buffer);
 void LC_GL_RenderTextNonDSA(const LC_GL_Renderer *renderer, GLint totalVertices, GLuint sizeOfBuffer, const float *buffer);
-void LC_GL_InsertTextBytesIntoBuffer(float *buffer, const LC_GL_TextSettings *gameText,
-                                     const LC_GL_Text *text);
+void LC_GL_InsertTextBytesIntoBuffer(float *buffer, const LC_GL_TextSettings *gameText, LC_GL_Text *text);
 
 // ==================================================================================================================
 
