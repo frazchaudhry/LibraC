@@ -331,7 +331,7 @@ void LC_GL_SetupVaoAndVboTextNonDSA(LC_GL_TextSettings *gameText) {
     GLCall(glBindVertexArray(0));
 }
 
-void LC_GL_RenderText(const LC_GL_Renderer *renderer, const LC_GL_Text *text) {
+void LC_GL_RenderText(const LC_GL_Renderer *renderer, LC_GL_Text *text) {
     const uint64 totalCharacters = LC_GetStringLengthSkipSpaces((const char*)text->string, strlen(text->string));
     const GLuint fontShaderProgramId = renderer->gameText->fontShader->programId;
 

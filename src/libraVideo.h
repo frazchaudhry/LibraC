@@ -120,7 +120,7 @@ void LC_GL_CreateTextureTextNonDSA(LC_GL_TextSettings *gameText, int32 fontAtlas
                                    const uchar *fontAtlasBitmap);
 void LC_GL_SetupVaoAndVboTextDSA(LC_GL_TextSettings *gameText);
 void LC_GL_SetupVaoAndVboTextNonDSA(LC_GL_TextSettings *gameText);
-void LC_GL_RenderText(const LC_GL_Renderer *renderer, const LC_GL_Text *text);
+void LC_GL_RenderText(const LC_GL_Renderer *renderer, LC_GL_Text *text);
 void LC_GL_RenderTextDSA(const LC_GL_Renderer *renderer, GLint totalVertices, GLuint sizeOfBuffer, const float *buffer);
 void LC_GL_RenderTextNonDSA(const LC_GL_Renderer *renderer, GLint totalVertices, GLuint sizeOfBuffer, const float *buffer);
 void LC_GL_InsertTextBytesIntoBuffer(float *buffer, const LC_GL_TextSettings *gameText, LC_GL_Text *text);
