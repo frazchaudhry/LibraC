@@ -13,6 +13,8 @@ FetchContent_Declare(
     GIT_REPOSITORY https://github.com/google/googletest.git
     GIT_TAG v1.17.0 # Or a specific commit/branch
 )
+# For Windows: Prevent overriding the parent project's compiler/linker settings
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 include(CTest)
 
@@ -23,7 +25,7 @@ add_subdirectory(external/GLAD)
 add_subdirectory(external/SDL)
 add_subdirectory(src/windows)
 add_subdirectory(src/linux)
-add_subdirectory(tests)
+# add_subdirectory(tests)
 
 add_library(LibraC STATIC src/libraCore.c
     src/libraVideo.c
@@ -34,10 +36,16 @@ add_library(LibraC STATIC src/libraCore.c
     src/linux/libraC-linux.c
     src/libraMath.h
     src/libraMath.c)
+add_executable(LibraCTests tests/libraCoreTests.cpp)
+
 target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wfatal-errors -Wunused-variable)
 
 target_include_directories(${PROJECT_NAME} PUBLIC src external/cglm external/stb external/debug_break)
 
-target_link_libraries(${PROJECT_NAME} PUBLIC SDL3::SDL3 glad -lm)
+target_link_libraries(${PROJECT_NAME} PUBLIC SDL3::SDL3 glad -lm )
+target_link_libraries(LibraCTests PRIVATE LibraC GTest::gtest_main)
+
+include(GoogleTest)
+gtest_discover_tests(LibraCTests)
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC "$<$<CONFIG:Debug>:DEBUG>")
