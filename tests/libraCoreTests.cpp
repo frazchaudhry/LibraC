@@ -1,3 +1,7 @@
+#ifdef __WIN32
+#include <io.h>
+#endif
+
 #include <gtest/gtest.h>
 
 extern "C" {

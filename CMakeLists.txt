@@ -3,6 +3,9 @@ project(LibraC C CXX)
 
 set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -14,7 +17,10 @@ FetchContent_Declare(
     GIT_TAG v1.17.0 # Or a specific commit/branch
 )
 # For Windows: Prevent overriding the parent project's compiler/linker settings
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+if (WIN32)
+    set(CMAKE_WIN32_EXECUTABLE ON)
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+endif ()
 FetchContent_MakeAvailable(googletest)
 include(CTest)
 
