@@ -22,6 +22,7 @@ if(UNIX)
 
     enable_testing()
 endif()
+
 add_subdirectory(src)
 add_subdirectory(external/GLAD)
 add_subdirectory(external/SDL)
